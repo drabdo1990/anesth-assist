@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/anesth-assist/sw.js', { scope: '/anesth-assist/' })})}
