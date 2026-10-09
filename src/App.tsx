@@ -3,6 +3,7 @@ import { BiometricBar } from './components/BiometricBar'
 import { BottomNav, type TabId } from './components/BottomNav'
 import { Disclaimer } from './components/Disclaimer'
 import { CalculatorView } from './views/CalculatorView'
+import { CrisisView } from './views/CrisisView'
 import { LocalMaxView } from './views/LocalMaxView'
 
 export default function App() {
@@ -14,7 +15,8 @@ export default function App() {
       <main className="min-h-0 flex-1 overflow-y-auto p-3">
         {tab === 'calc' && <CalculatorView />}
         {tab === 'local' && <LocalMaxView />}
-        {(tab === 'crisis' || tab === 'lists') && <p className="text-muted">View: {tab}</p>}
+        {tab === 'crisis' && <CrisisView />}
+        {tab === 'lists' && <p className="text-muted">View: {tab}</p>}
       </main>
       <Disclaimer />
       <BottomNav tab={tab} onChange={setTab} />
