@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Plus, ShieldAlert, Trash2 } from 'lucide-react'
+import { AlertTriangle, Plus, ShieldAlert, Trash2 } from 'lucide-react'
 import { fmtNum } from '../lib/format'
+import { parseVolume } from '../lib/parseNumber'
 import { LA_AGENTS, evaluateLA, type LAEntry } from '../lib/localAnesthetics'
 import { useStore } from '../store'
 
@@ -22,10 +23,9 @@ export function LocalMaxView() {
   const update = (key: number, patch: Partial<Row>) =>
     setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)))
 
-  const entries: LAEntry[] = rows.map((r) => {
-    const v = r.volume.trim() === '' ? null : Number(r.volume)
-    return { agentId: r.agentId, epi: r.epi, conc: r.conc, volumeMl: v !== null && Number.isFinite(v) ? v : null }
-  })
+  const parsed = rows.map((r) => parseVolume(r.volume))
+  const anyInvalid = parsed.some((p) => p.invalid)
+  const entries: LAEntry[] = rows.map((r, i) => ({ agentId: r.agentId, epi: r.epi, conc: r.conc, volumeMl: parsed[i].value }))
   const result = evaluateLA(entries, weightKg)
 
   if (!result) {
@@ -38,10 +38,15 @@ export function LocalMaxView() {
 
   return (
     <div className="space-y-3">
+      {anyInvalid && (
+        <p role="alert" className="flex items-center gap-2 rounded-md border border-crimson bg-crimson/10 px-2 py-1 font-bold text-crimson">
+          <AlertTriangle size={18} aria-hidden /> Some volumes are invalid and are NOT included in the total.
+        </p>
+      )}
       <section className="rounded-xl border border-line bg-card p-3" aria-live="polite">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">Total fraction of maximum (Σ dose ÷ max)</p>
         <p className={`font-mono text-4xl font-bold tabular-nums ${text}`}>{result.total.toFixed(2)}</p>
-        <div className="mt-2 h-3 overflow-hidden rounded-full bg-base" role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
+        <div className="mt-2 h-3 overflow-hidden rounded-full bg-base" role="progressbar" aria-label="Total fraction of maximum" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
           <div className={`h-full ${tone}`} style={{ width: `${pct}%` }} />
         </div>
         {result.level === 'toxic' && (
@@ -90,8 +95,14 @@ export function LocalMaxView() {
               </select>
               <input inputMode="decimal" placeholder="mL" aria-label="Volume in mL" value={r.volume}
                 onChange={(e) => update(r.key, { volume: e.target.value })}
-                className="min-h-12 w-24 rounded-lg border border-line bg-base px-2 font-mono text-lg font-bold tabular-nums text-accent outline-none focus:border-accent" />
+                aria-invalid={parsed[i].invalid}
+                className={`min-h-12 w-24 rounded-lg border bg-base px-2 font-mono text-lg font-bold tabular-nums text-accent outline-none focus:border-accent ${parsed[i].invalid ? 'border-crimson' : 'border-line'}`} />
             </div>
+            {parsed[i].invalid && (
+              <p className="flex items-center gap-1 text-sm font-bold text-crimson">
+                <AlertTriangle size={16} aria-hidden /> Invalid volume, counted as 0 mg
+              </p>
+            )}
 
             <p className="font-mono text-sm tabular-nums text-muted">
               <span className="text-lg font-bold text-fg">{fmtNum(row.mg)} mg</span> of max{' '}
