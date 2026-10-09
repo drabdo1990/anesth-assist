@@ -35,8 +35,8 @@ export function Checklist({ items, accent = 'accent' }: { items: Item[]; accent?
           <label key={it.id}
             className={`flex min-h-14 cursor-pointer items-start gap-3 rounded-xl border p-3 ${on ? 'border-ok bg-ok/10' : `${idle} bg-card`}`}>
             <Checkbox.Root checked={on} onCheckedChange={() => toggle(it.id)}
-              className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border-2 ${on ? 'border-ok bg-ok' : 'border-muted bg-base'}`}>
-              <Checkbox.Indicator><Check size={20} className="text-base" aria-hidden /></Checkbox.Indicator>
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-md border-2 ${on ? 'border-ok bg-ok' : 'border-muted bg-base'}`}>
+              <Checkbox.Indicator><Check size={24} className="text-base" aria-hidden /></Checkbox.Indicator>
             </Checkbox.Root>
             <span className="min-w-0">
               <span className={`block text-[1rem] ${it.critical ? 'font-bold' : 'font-medium'} ${on ? 'text-ok line-through decoration-1' : ''}`}>
