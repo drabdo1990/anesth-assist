@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+@theme {
+  --color-base: #090d16;
+  --color-card: #131b2e;
+  --color-line: #1e293b;
+  --color-accent: #06b6d4;
+  --color-crimson: #ef4444;
+  --color-ok: #10b981;
+  --color-amber: #f59e0b;
+  --color-fg: #e2e8f0;
+  --color-muted: #94a3b8;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+:root { color-scheme: dark; }
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: #090d16;
+  color: var(--color-fg);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+input, button, select, textarea { font: inherit; color: inherit; }
