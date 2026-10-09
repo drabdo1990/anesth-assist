@@ -11,7 +11,7 @@ A bedside cognitive aid for anesthesia providers in routine cases and emergencie
   - Stack: Vite, React 19, TypeScript, Tailwind, Lucide, Radix, Zustand (persisted), vite-plugin-pwa (`autoUpdate`).
   - Four tabs behind a sticky bottom nav: Calculator, Crisis Cards, Local Max / Blocks, Checklists & PACU.
   - Exact biometric formulas; a permanent disclaimer; no mock data.
-- **Agreed:** constants not in the spec use standard published values (ASRA, MHAUS, DAS) and are flagged for review (`source: 'added'` in the data files, and listed in section 9).
+- **Agreed:** constants not in the spec use standard published values (ASRA, MHAUS, DAS) and are flagged for review (marked with `// added` comments in the data files, and listed in section 9).
 - **Success:** every number in the app is produced by a tested pure function, and the app works fully offline after the first load.
 
 ## 2. Architecture (data-driven; logic separate from rendering)
@@ -111,6 +111,10 @@ src/lib/*.test.ts            Vitest unit tests
 ## 9. Added constants to review (not in your spec)
 Absolute local-anesthetic ceilings (lidocaine 300/500 mg, bupivacaine 175/225 mg, ropivacaine 200 mg); ropivacaine, mepivacaine and chloroprocaine entries; lipid total 12 mL/kg; dantrolene vial size, reconstitution and the 10 mg/kg flag; Ryanodex vial size and concentration; default vial concentrations; the 0.8 amber threshold; the soft input ranges and the pediatric/obesity banner thresholds.
 Lidocaine uses 4 mg/kg plain as written, although many references use 4.5.
+
+Needs clinician review (final-review items):
+- The lipid infusion is dosed on total body weight at 0.25 mL/kg/min as specified and may be very high for large patients (ASRA suggests roughly 200-250 mL over 15-20 min above 70 kg).
+- CICO Plan C wording was changed: the former step "Ensure paralysis (consider rocuronium + sugammadex 16 mg/kg)" was contradictory (sugammadex reverses paralysis) and is now two branches: face-mask ventilation possible (oxygenate, wake the patient with sugammadex) versus not possible (confirm blockade, no sugammadex, go to Plan D).
 
 ## 10. Out of scope
 Pediatric-specific dosing, drug-interaction checking, infusion calculators, user-editable drug lists, cloud sync.
