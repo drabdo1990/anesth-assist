@@ -9,6 +9,7 @@ export interface Scalars {
   bmi: number
 }
 
+// added: soft input ranges (hard validity ranges below, advisories further down)
 export const WEIGHT_RANGE = { min: 1, max: 400 } as const
 export const HEIGHT_RANGE = { min: 30, max: 250 } as const
 
@@ -48,12 +49,14 @@ export function computeScalars(
 }
 
 export function inputAdvisories(tbw: number | null, heightCm: number | null) {
+  // added: soft-warning bounds (weight 2-250 kg, height < 100 cm) are not in the brief
   const softWarnings: string[] = []
   if (finite(tbw) && (tbw < 2 || tbw > 250)) softWarnings.push('Weight looks unusual: check input')
   if (finite(heightCm) && heightCm < 100) softWarnings.push('Height looks unusual: check input')
 
   const bmi =
     isWeightValid(tbw) && isHeightValid(heightCm) ? tbw / (heightCm / 100) ** 2 : null
+  // added: adult-only banner thresholds (height < 140 cm, weight < 30 kg, BMI >= 40)
   const adultOnly =
     (finite(heightCm) && heightCm < 140) ||
     (finite(tbw) && tbw < 30) ||

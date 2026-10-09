@@ -61,3 +61,17 @@ describe('protocol data', () => {
     expect(CICO_PLANS[3].title.toLowerCase()).toContain('front of neck')
   })
 })
+
+describe('Plan C wording', () => {
+  it('no single step mentions both paralysis and sugammadex', () => {
+    for (const p of CICO_PLANS) for (const s of p.steps) {
+      const t = `${s.text} ${s.detail ?? ''}`.toLowerCase()
+      expect(t.includes('paralysis') && t.includes('sugammadex')).toBe(false)
+    }
+  })
+  it('Plan C has the two ventilation branches', () => {
+    const ids = CICO_PLANS.find((p) => p.id === 'C')!.steps.map((s) => s.id)
+    expect(ids).toContain('c-mask-ok')
+    expect(ids).toContain('c-mask-fail')
+  })
+})

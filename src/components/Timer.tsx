@@ -4,7 +4,7 @@ import { Pause, Play, RotateCcw } from 'lucide-react'
 const mmss = (s: number) =>
   `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`
 
-export function Timer({ title, cycleSeconds }: { title: string; cycleSeconds?: number }) {
+export function Timer({ title, label, cycleSeconds }: { title: string; label: string; cycleSeconds?: number }) {
   const [running, setRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [flash, setFlash] = useState(false)
@@ -80,10 +80,10 @@ export function Timer({ title, cycleSeconds }: { title: string; cycleSeconds?: n
         <div className="flex gap-2">
           <button type="button" onClick={running ? () => setRunning(false) : start}
             className="flex min-h-14 min-w-14 items-center justify-center gap-1 rounded-xl bg-accent px-4 font-bold text-base"
-            aria-label={running ? 'Pause timer' : 'Start timer'}>
+            aria-label={running ? `Pause ${label} timer` : `Start ${label} timer`}>
             {running ? <Pause size={22} /> : <Play size={22} />}
           </button>
-          <button type="button" onClick={reset} aria-label="Reset timer"
+          <button type="button" onClick={reset} aria-label={`Reset ${label} timer`}
             className="flex min-h-14 min-w-14 items-center justify-center rounded-xl border border-line">
             <RotateCcw size={20} />
           </button>

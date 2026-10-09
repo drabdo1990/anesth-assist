@@ -10,8 +10,10 @@ export interface LAAgent {
   concentrations: number[] // percent
 }
 
-// Lidocaine and bupivacaine mg/kg values come from the spec. Absolute ceilings and
-// the other agents are added standard values (spec section 9).
+// Lidocaine and bupivacaine mg/kg values come from the spec.
+// added: absolute ceilings (absPlain/absEpi) for every agent, and the whole
+// ropivacaine, mepivacaine and chloroprocaine rows, are standard published values
+// not in the original brief (spec section 9).
 export const LA_AGENTS: LAAgent[] = [
   { id: 'lidocaine', name: 'Lidocaine', mgPerKgPlain: 4, mgPerKgEpi: 7, absPlain: 300, absEpi: 500, concentrations: [0.5, 1, 1.5, 2] },
   { id: 'bupivacaine', name: 'Bupivacaine', mgPerKgPlain: 2, mgPerKgEpi: 2.5, absPlain: 175, absEpi: 225, concentrations: [0.25, 0.5, 0.75] },
@@ -62,11 +64,23 @@ export function evaluateLA(entries: LAEntry[], tbw: number | null): LAResult | n
   }
 
   const total = rows.reduce((s, r) => s + r.fraction, 0)
+  // added: 0.8 caution threshold is not in the original brief (spec section 9)
   // small epsilon so float error cannot hide an exact 1.0 or 0.8
-  const level = total >= 1 - 1e-9 ? 'toxic' : total >= 0.8 - 1e-9 ? 'caution' : 'ok'
+  // fail closed: a non-finite total (e.g. NaN concentration) is never reported as safe
+  const level = !Number.isFinite(total) || total >= 1 - 1e-9 ? 'toxic' : total >= 0.8 - 1e-9 ? 'caution' : 'ok'
   const worst = rows.reduce<LARow | null>(
     (w, r) => (w === null || r.fraction > w.fraction ? r : w),
     null,
   )
   return { rows, total, level, worst }
+}
+
+export type DisplayTone = 'ok' | 'caution' | 'toxic' | 'incomplete'
+
+// A green "ok" must never sit beside invalid volumes that were left out of the total.
+export function localMaxDisplay(level: LAResult['level'], anyInvalid: boolean): { tone: DisplayTone; message: string } {
+  if (level === 'toxic') return { tone: 'toxic', message: 'TOXIC RISK: total ≥ 1.0' }
+  if (level === 'caution') return { tone: 'caution', message: 'CAUTION: approaching the combined maximum (≥ 0.8)' }
+  if (anyInvalid) return { tone: 'incomplete', message: 'Incomplete: fix invalid volumes' }
+  return { tone: 'ok', message: 'Safe if total stays below 1.0.' }
 }

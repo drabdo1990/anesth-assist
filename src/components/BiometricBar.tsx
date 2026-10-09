@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import * as ToggleGroup from '@radix-ui/react-toggle-group'
 import { TriangleAlert } from 'lucide-react'
 import { inputAdvisories, type Sex } from '../lib/biometrics'
@@ -8,14 +9,15 @@ import { ScalarBadge } from './ScalarBadge'
 
 export function BiometricBar({ compact = false }: { compact?: boolean }) {
   const { weightKg, heightCm, sex, setWeight, setHeight, setSex, clearBiometrics } = useStore()
+  const [resetKey, setResetKey] = useState(0)
   const scalars = useScalars()
   const { softWarnings, adultOnly } = inputAdvisories(weightKg, heightCm)
 
   return (
     <section className="sticky top-0 z-10 border-b border-line bg-base/95 p-3 backdrop-blur">
       <div className="flex gap-2">
-        <NumField label="Weight (TBW)" unit="kg" value={weightKg} onChange={setWeight} stepper max={400} />
-        {!compact && <NumField label="Height" unit="cm" value={heightCm} onChange={setHeight} start={170} max={250} />}
+        <NumField key={`w${resetKey}`} label="Weight (TBW)" unit="kg" value={weightKg} onChange={setWeight} stepper max={400} />
+        {!compact && <NumField key={`h${resetKey}`} label="Height" unit="cm" value={heightCm} onChange={setHeight} max={250} />}
       </div>
 
       {!compact && (
@@ -29,7 +31,7 @@ export function BiometricBar({ compact = false }: { compact?: boolean }) {
               </ToggleGroup.Item>
             ))}
           </ToggleGroup.Root>
-          <button type="button" onClick={clearBiometrics}
+          <button type="button" onClick={() => { clearBiometrics(); setResetKey((k) => k + 1) }}
             className="ml-auto min-h-12 rounded-lg border border-line px-3 text-sm text-muted active:bg-line">
             Clear
           </button>

@@ -37,8 +37,9 @@ const glycopyrrolate: Drug = {
   defaultConc: 0.2,
 }
 
-// Dose rates and scalars come from the spec. Vial concentrations are added defaults
-// (editable per drug); see spec section 9.
+// Dose rates and scalars come from the spec.
+// added: default vial concentrations (concentrations/defaultConc on every drug) are
+// standard values not in the original brief, editable per drug; see spec section 9.
 export const DRUGS: Drug[] = [
   {
     id: 'propofol',

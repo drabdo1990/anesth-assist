@@ -104,7 +104,8 @@ export const CICO_PLANS: CicoPlan[] = [
     title: 'Plan C: Final attempt at face-mask ventilation',
     goal: 'Last non-invasive attempt while preparing for Plan D.',
     steps: [
-      { id: 'c-nmb', text: 'Ensure paralysis (consider rocuronium + sugammadex 16 mg/kg)', critical: true },
+      { id: 'c-mask-ok', text: 'If face-mask ventilation is possible: oxygenate, then wake the patient (sugammadex 16 mg/kg reverses rocuronium; dose is on the Calculator tab)' },
+      { id: 'c-mask-fail', text: 'If face-mask ventilation is NOT possible (CICO): confirm full neuromuscular blockade, give more neuromuscular blocker if needed, do NOT give sugammadex, go to Plan D', critical: true },
       { id: 'c-mask', text: 'Two-handed jaw thrust, oropharyngeal and nasopharyngeal airways' },
       { id: 'c-prep', text: 'Open the front-of-neck kit now', critical: true },
     ],

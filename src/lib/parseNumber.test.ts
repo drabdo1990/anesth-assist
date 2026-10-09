@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { parseVolume } from './parseNumber'
+import { parseDecimalInput, parseVolume } from './parseNumber'
 
 describe('parseVolume', () => {
   it('empty is null and not invalid', () => expect(parseVolume('')).toEqual({ value: null, invalid: false }))
@@ -10,4 +10,13 @@ describe('parseVolume', () => {
   it('rejects double dot', () => expect(parseVolume('1.5.2')).toEqual({ value: null, invalid: true }))
   it('rejects negative', () => expect(parseVolume('-3')).toEqual({ value: null, invalid: true }))
   it('zero is valid', () => expect(parseVolume('0')).toEqual({ value: 0, invalid: false }))
+})
+
+describe('parseDecimalInput', () => {
+  it('comma decimal', () => expect(parseDecimalInput('72,5')).toEqual({ value: 72.5, invalid: false }))
+  it('dot decimal', () => expect(parseDecimalInput('72.5')).toEqual({ value: 72.5, invalid: false }))
+  it('letters invalid', () => expect(parseDecimalInput('abc')).toEqual({ value: null, invalid: true }))
+  it('zero invalid', () => expect(parseDecimalInput('0')).toEqual({ value: null, invalid: true }))
+  it('negative invalid', () => expect(parseDecimalInput('-4')).toEqual({ value: null, invalid: true }))
+  it('empty is null, not invalid', () => expect(parseDecimalInput('  ')).toEqual({ value: null, invalid: false }))
 })

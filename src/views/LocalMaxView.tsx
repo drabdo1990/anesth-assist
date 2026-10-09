@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { AlertTriangle, Plus, ShieldAlert, Trash2 } from 'lucide-react'
-import { fmtNum } from '../lib/format'
+import { fmtFraction, fmtNum } from '../lib/format'
 import { parseVolume } from '../lib/parseNumber'
-import { LA_AGENTS, evaluateLA, type LAEntry } from '../lib/localAnesthetics'
+import { LA_AGENTS, evaluateLA, localMaxDisplay, type LAEntry } from '../lib/localAnesthetics'
 import { useStore } from '../store'
 
 interface Row extends Omit<LAEntry, 'volumeMl'> {
@@ -33,8 +33,9 @@ export function LocalMaxView() {
   }
 
   const pct = Math.min(result.total * 100, 100)
-  const tone = result.level === 'toxic' ? 'bg-crimson' : result.level === 'caution' ? 'bg-amber' : 'bg-ok'
-  const text = result.level === 'toxic' ? 'text-crimson' : result.level === 'caution' ? 'text-amber' : 'text-ok'
+  const display = localMaxDisplay(result.level, anyInvalid)
+  const tone = { toxic: 'bg-crimson', caution: 'bg-amber', ok: 'bg-ok', incomplete: 'bg-muted' }[display.tone]
+  const text = { toxic: 'text-crimson', caution: 'text-amber', ok: 'text-ok', incomplete: 'text-muted' }[display.tone]
 
   return (
     <div className="space-y-3">
@@ -45,7 +46,7 @@ export function LocalMaxView() {
       )}
       <section className="rounded-xl border border-line bg-card p-3" aria-live="polite">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">Total fraction of maximum (Σ dose ÷ max)</p>
-        <p className={`font-mono text-4xl font-bold tabular-nums ${text}`}>{result.total.toFixed(2)}</p>
+        <p className={`font-mono text-4xl font-bold tabular-nums ${text}`}>{fmtFraction(result.total)}</p>
         <div className="mt-2 h-3 overflow-hidden rounded-full bg-base" role="progressbar" aria-label="Total fraction of maximum" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100}>
           <div className={`h-full ${tone}`} style={{ width: `${pct}%` }} />
         </div>
@@ -57,7 +58,8 @@ export function LocalMaxView() {
         {result.level === 'caution' && (
           <p className="mt-2 font-semibold text-amber">CAUTION: approaching the combined maximum (≥ 0.8)</p>
         )}
-        {result.level === 'ok' && <p className="mt-2 text-sm text-muted">Safe if total stays below 1.0.</p>}
+        {display.tone === 'ok' && <p className="mt-2 text-sm text-muted">{display.message}</p>}
+        {display.tone === 'incomplete' && <p className="mt-2 font-semibold text-muted">{display.message}</p>}
       </section>
 
       {rows.map((r, i) => {
@@ -107,7 +109,7 @@ export function LocalMaxView() {
             <p className="font-mono text-sm tabular-nums text-muted">
               <span className="text-lg font-bold text-fg">{fmtNum(row.mg)} mg</span> of max{' '}
               <span className="font-bold text-fg">{fmtNum(row.maxMg)} mg</span> ({r.epi ? agent.mgPerKgEpi : agent.mgPerKgPlain} mg/kg, ceiling {r.epi ? agent.absEpi : agent.absPlain} mg) · fraction{' '}
-              <span className="font-bold text-fg">{row.fraction.toFixed(2)}</span>
+              <span className="font-bold text-fg">{fmtFraction(row.fraction)}</span>
             </p>
           </article>
         )

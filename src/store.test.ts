@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sanitizePersisted } from './store'
+import { sanitizePersisted, useStore } from './store'
 
 describe('sanitizePersisted', () => {
   it('accepts a well-formed state', () => {
@@ -17,5 +17,15 @@ describe('sanitizePersisted', () => {
   })
   it('drops non-numeric or non-positive concentration overrides', () => {
     expect(sanitizePersisted({ concOverrides: { a: 5, b: 'x', c: -1 } }).concOverrides).toEqual({ a: 5 })
+  })
+})
+
+describe('clearBiometrics', () => {
+  it('clears weight, height and resets sex, keeping concOverrides', () => {
+    useStore.setState({ weightKg: 80, heightCm: 170, sex: 'female', concOverrides: { a: 5 } })
+    useStore.getState().clearBiometrics()
+    const s = useStore.getState()
+    expect([s.weightKg, s.heightCm, s.sex]).toEqual([null, null, 'male'])
+    expect(s.concOverrides).toEqual({ a: 5 })
   })
 })

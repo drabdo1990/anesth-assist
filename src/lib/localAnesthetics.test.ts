@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { LA_AGENTS, evaluateLA, maxDoseMg } from './localAnesthetics'
+import { LA_AGENTS, evaluateLA, localMaxDisplay, maxDoseMg } from './localAnesthetics'
 
 const agent = (id: string) => LA_AGENTS.find((a) => a.id === id)!
 
@@ -65,5 +65,25 @@ describe('evaluateLA', () => {
     expect(r.total).toBe(0)
     expect(r.rows.length).toBe(2)
     expect(r.level).toBe('ok')
+  })
+})
+
+describe('evaluateLA fail closed', () => {
+  it('NaN concentration yields toxic', () => {
+    const r = evaluateLA([{ agentId: 'lidocaine', epi: false, volumeMl: 5, conc: NaN }], 70)!
+    expect(r.level).toBe('toxic')
+  })
+})
+
+describe('localMaxDisplay', () => {
+  it('ok and valid is ok', () => expect(localMaxDisplay('ok', false).tone).toBe('ok'))
+  it('ok with invalid volumes is incomplete, not green', () => {
+    const d = localMaxDisplay('ok', true)
+    expect(d.tone).toBe('incomplete')
+    expect(d.message).toBe('Incomplete: fix invalid volumes')
+  })
+  it('caution and toxic stay warnings even with invalid volumes', () => {
+    expect(localMaxDisplay('caution', true).tone).toBe('caution')
+    expect(localMaxDisplay('toxic', true).tone).toBe('toxic')
   })
 })

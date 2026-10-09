@@ -61,9 +61,9 @@ export function ChecklistsView() {
         <Tabs.Trigger value="ext" className={trigger}>Extubation</Tabs.Trigger>
         <Tabs.Trigger value="pacu" className={trigger}>PACU</Tabs.Trigger>
       </Tabs.List>
-      <Tabs.Content value="who"><Checklist items={WHO_ITEMS} /></Tabs.Content>
-      <Tabs.Content value="ext"><Checklist items={EXTUBATION_ITEMS} /></Tabs.Content>
-      <Tabs.Content value="pacu"><Pacu /></Tabs.Content>
+      <Tabs.Content value="who" forceMount className="data-[state=inactive]:hidden"><Checklist items={WHO_ITEMS} /></Tabs.Content>
+      <Tabs.Content value="ext" forceMount className="data-[state=inactive]:hidden"><Checklist items={EXTUBATION_ITEMS} /></Tabs.Content>
+      <Tabs.Content value="pacu" forceMount className="data-[state=inactive]:hidden"><Pacu /></Tabs.Content>
     </Tabs.Root>
   )
 }

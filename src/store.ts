@@ -54,7 +54,7 @@ export const useStore = create<State>()(
       setSex: (sex) => set({ sex }),
       setConc: (drugId, conc) =>
         set((s) => ({ concOverrides: { ...s.concOverrides, [drugId]: conc } })),
-      clearBiometrics: () => set({ weightKg: null, heightCm: null }),
+      clearBiometrics: () => set({ weightKg: null, heightCm: null, sex: 'male' }),
     }),
     {
       name: 'anesthassist-v1',

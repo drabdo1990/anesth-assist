@@ -66,7 +66,7 @@ function CicoPanel() {
   const last = idx === CICO_PLANS.length - 1
   return (
     <div className="space-y-3">
-      <Timer title="CICO elapsed time" />
+      <Timer title="CICO elapsed time" label="CICO" />
       <div className="flex gap-1" aria-label="Plan progress">
         {CICO_PLANS.map((p, i) => (
           <button key={p.id} type="button" onClick={() => setIdx(i)}
@@ -77,7 +77,11 @@ function CicoPanel() {
       </div>
       <h3 className="text-lg font-bold text-crimson">{plan.title}</h3>
       <p className="text-sm text-muted">{plan.goal}</p>
-      <Checklist key={plan.id} items={plan.steps} accent="crimson" />
+      {CICO_PLANS.map((p, i) => (
+        <div key={p.id} className={i === idx ? '' : 'hidden'}>
+          <Checklist items={p.steps} accent="crimson" />
+        </div>
+      ))}
       <p className="flex items-start gap-2 rounded-lg border border-crimson bg-crimson/10 p-3 font-semibold text-crimson">
         <TriangleAlert size={18} className="mt-0.5 shrink-0" aria-hidden /> {plan.failure}
       </p>
@@ -104,7 +108,7 @@ export function CrisisView() {
       <p className="flex items-center gap-2 rounded-xl bg-crimson p-3 text-lg font-extrabold text-white">
         <PhoneCall size={22} aria-hidden /> CALL FOR HELP FIRST
       </p>
-      <Timer title="CPR / rhythm check (2 min cycle)" cycleSeconds={120} />
+      <Timer title="CPR / rhythm check (2 min cycle)" label="CPR" cycleSeconds={120} />
       <div className="grid grid-cols-3 gap-2" role="tablist">
         {tabs.map((t) => (
           <button key={t.id} role="tab" aria-selected={proto === t.id} type="button" onClick={() => setProto(t.id)}
@@ -113,9 +117,9 @@ export function CrisisView() {
           </button>
         ))}
       </div>
-      {proto === 'last' && <LastPanel kg={weightKg} />}
-      {proto === 'mh' && <MhPanel kg={weightKg} />}
-      {proto === 'cico' && <CicoPanel />}
+      <div className={proto === 'last' ? '' : 'hidden'}><LastPanel kg={weightKg} /></div>
+      <div className={proto === 'mh' ? '' : 'hidden'}><MhPanel kg={weightKg} /></div>
+      <div className={proto === 'cico' ? '' : 'hidden'}><CicoPanel /></div>
     </div>
   )
 }

@@ -17,3 +17,8 @@ export function fmtRange(
 ): string {
   return high === null ? fmt(low) : `${fmt(low)}–${fmt(high)}`
 }
+
+// Floors to 2 decimals so a total of 0.996 is never displayed as 1.00 (or 0.8 early).
+export function fmtFraction(n: number): string {
+  return (Math.floor(n * 100 + 1e-9) / 100).toFixed(2)
+}
