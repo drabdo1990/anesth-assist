@@ -1,9 +1,12 @@
 import { defineConfig } from 'vitest/config'
+import { loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // set VITE_BASE=/repo-name/ when hosting under a sub-path (e.g. GitHub Pages)
+  base: loadEnv(mode, '.', 'VITE_').VITE_BASE || '/',
   plugins: [
     react(),
     tailwindcss(),
@@ -32,4 +35,4 @@ export default defineConfig({
     }),
   ],
   test: { environment: 'node', include: ['src/**/*.test.ts'] },
-})
+}))
