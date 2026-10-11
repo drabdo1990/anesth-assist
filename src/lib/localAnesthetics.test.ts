@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { LA_AGENTS, evaluateLA, localMaxDisplay, maxDoseMg } from './localAnesthetics'
+import { evaluateLA, LA_AGENTS, localMaxDisplay, maxDoseMg } from './localAnesthetics'
 
 const agent = (id: string) => LA_AGENTS.find((a) => a.id === id)!
 
@@ -47,7 +47,10 @@ describe('evaluateLA', () => {
   it('below 0.8 is ok, 0.8 to below 1.0 is caution, exactly 1.0 is toxic', () => {
     const ok = evaluateLA([{ agentId: 'bupivacaine', epi: false, volumeMl: 22, conc: 0.5 }], 70)! // 110/140 = 0.786
     expect(ok.level).toBe('ok')
-    const caution = evaluateLA([{ agentId: 'bupivacaine', epi: false, volumeMl: 23, conc: 0.5 }], 70)! // 115/140 = 0.821
+    const caution = evaluateLA(
+      [{ agentId: 'bupivacaine', epi: false, volumeMl: 23, conc: 0.5 }],
+      70,
+    )! // 115/140 = 0.821
     expect(caution.level).toBe('caution')
     const toxic = evaluateLA([{ agentId: 'bupivacaine', epi: false, volumeMl: 28, conc: 0.5 }], 70)! // 140/140 = 1
     expect(toxic.level).toBe('toxic')

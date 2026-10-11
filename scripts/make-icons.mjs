@@ -1,5 +1,5 @@
-import sharp from 'sharp'
 import { mkdirSync } from 'node:fs'
+import sharp from 'sharp'
 
 mkdirSync('public/icons', { recursive: true })
 const wave = (inset) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
@@ -13,6 +13,9 @@ const jobs = [
   ['public/icons/icon-maskable-512.png', 512, 90],
 ]
 for (const [file, size, inset] of jobs) {
-  await sharp(Buffer.from(wave(inset))).resize(size, size).png().toFile(file)
+  await sharp(Buffer.from(wave(inset)))
+    .resize(size, size)
+    .png()
+    .toFile(file)
   console.log('wrote', file)
 }

@@ -1,5 +1,5 @@
 import type { Scalars } from './biometrics'
-import type { Drug, DoseOption } from './drugs'
+import type { DoseOption, Drug } from './drugs'
 
 export interface DoseResult {
   label: string

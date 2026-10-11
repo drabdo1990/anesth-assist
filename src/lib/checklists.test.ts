@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EXTUBATION_ITEMS, PACU_FIELDS, WHO_ITEMS, buildPacuSummary } from './checklists'
+import { buildPacuSummary, EXTUBATION_ITEMS, PACU_FIELDS, WHO_ITEMS } from './checklists'
 
 describe('checklist data', () => {
   it('has unique ids', () => {

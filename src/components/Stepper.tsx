@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
 import { Minus, Plus } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 
 import { parseDecimalInput } from '../lib/parseNumber'
 
@@ -15,11 +15,10 @@ interface Props {
 export function NumField({ label, unit, value, onChange, stepper, max = 999 }: Props) {
   const [text, setText] = useState(value === null ? '' : String(value))
 
+  // Re-sync only when the store value changes from outside; typing keeps its own text.
   useEffect(() => {
     if (parseDecimalInput(text).value !== value) setText(value === null ? '' : String(value))
-    // only resync when the store value changes from outside
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value])
+  }, [value, text])
 
   const inputRef = useRef<HTMLInputElement>(null)
   const { invalid } = parseDecimalInput(text)
@@ -38,8 +37,12 @@ export function NumField({ label, unit, value, onChange, stepper, max = 999 }: P
       <span className="text-xs font-semibold uppercase tracking-wide text-muted">{label}</span>
       <span className="flex items-stretch gap-1">
         {stepper && (
-          <button type="button" aria-label={`Decrease ${label}`} onClick={() => bump(-1)}
-            className="flex min-h-14 min-w-14 items-center justify-center rounded-lg border border-line bg-card active:bg-line">
+          <button
+            type="button"
+            aria-label={`Decrease ${label}`}
+            onClick={() => bump(-1)}
+            className="flex min-h-14 min-w-14 items-center justify-center rounded-lg border border-line bg-card active:bg-line"
+          >
             <Minus size={20} />
           </button>
         )}
@@ -56,11 +59,17 @@ export function NumField({ label, unit, value, onChange, stepper, max = 999 }: P
             className={`min-h-12 w-full rounded-lg border ${invalid ? 'border-crimson' : 'border-line'} bg-card px-3 pr-10 font-mono text-xl font-bold tabular-nums text-accent outline-none focus:border-accent`}
             aria-label={label}
           />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">{unit}</span>
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">
+            {unit}
+          </span>
         </span>
         {stepper && (
-          <button type="button" aria-label={`Increase ${label}`} onClick={() => bump(1)}
-            className="flex min-h-14 min-w-14 items-center justify-center rounded-lg border border-line bg-card active:bg-line">
+          <button
+            type="button"
+            aria-label={`Increase ${label}`}
+            onClick={() => bump(1)}
+            className="flex min-h-14 min-w-14 items-center justify-center rounded-lg border border-line bg-card active:bg-line"
+          >
             <Plus size={20} />
           </button>
         )}

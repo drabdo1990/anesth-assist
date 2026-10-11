@@ -15,10 +15,18 @@ export default function App() {
       {tab === 'crisis' && <BiometricBar compact />}
       <main className="min-h-0 flex-1 overflow-y-auto p-3">
         {/* all views stay mounted so timers, ticks and entries survive tab switches */}
-        <div className={tab === 'calc' ? '' : 'hidden'}><CalculatorView /></div>
-        <div className={tab === 'local' ? '' : 'hidden'}><LocalMaxView /></div>
-        <div className={tab === 'crisis' ? '' : 'hidden'}><CrisisView /></div>
-        <div className={tab === 'lists' ? '' : 'hidden'}><ChecklistsView /></div>
+        <div className={tab === 'calc' ? '' : 'hidden'}>
+          <CalculatorView />
+        </div>
+        <div className={tab === 'local' ? '' : 'hidden'}>
+          <LocalMaxView />
+        </div>
+        <div className={tab === 'crisis' ? '' : 'hidden'}>
+          <CrisisView />
+        </div>
+        <div className={tab === 'lists' ? '' : 'hidden'}>
+          <ChecklistsView />
+        </div>
       </main>
       <Disclaimer />
       <BottomNav tab={tab} onChange={setTab} />

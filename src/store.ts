@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { createJSONStorage, persist } from 'zustand/middleware'
 import type { Sex } from './lib/biometrics'
 
 interface Persisted {
@@ -17,8 +17,7 @@ interface State extends Persisted {
   clearBiometrics: () => void
 }
 
-const num = (v: unknown): number | null =>
-  typeof v === 'number' && Number.isFinite(v) ? v : null
+const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 
 export function sanitizePersisted(raw: unknown): Persisted {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
@@ -59,7 +58,9 @@ export const useStore = create<State>()(
     {
       name: 'anesthassist-v1',
       version: 1,
-      storage: createJSONStorage(() => (typeof localStorage === 'undefined' ? memoryStorage : localStorage)),
+      storage: createJSONStorage(() =>
+        typeof localStorage === 'undefined' ? memoryStorage : localStorage,
+      ),
       partialize: (s): Persisted => ({
         weightKg: s.weightKg,
         heightCm: s.heightCm,

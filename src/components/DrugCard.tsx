@@ -21,25 +21,34 @@ function DrugBody({ drug }: { drug: Drug }) {
       </div>
 
       {!scalars ? (
-        <p className="rounded-md border border-line bg-base p-3 text-sm text-muted">Enter valid weight &amp; height</p>
+        <p className="rounded-md border border-line bg-base p-3 text-sm text-muted">
+          Enter valid weight &amp; height
+        </p>
       ) : (
         drug.options.map((opt) => {
           const r = calcOption(drug, opt, scalars, conc)
           return (
             <div key={opt.label} className="rounded-lg border border-line bg-base p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted">{opt.label}</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+                {opt.label}
+              </p>
               <p className="font-mono text-3xl font-bold tabular-nums text-accent">
                 {fmtRange(r.massLow, r.massHigh)} <span className="text-lg">{r.unit}</span>
               </p>
               <p className="font-mono text-xl font-semibold tabular-nums">
-                {fmtRange(r.volLow, r.volHigh, fmtVol)} <span className="text-base text-muted">mL</span>
-                <span className="ml-2 text-xs text-muted">@ {fmtNum(conc)} {r.unit}/mL</span>
+                {fmtRange(r.volLow, r.volHigh, fmtVol)}{' '}
+                <span className="text-base text-muted">mL</span>
+                <span className="ml-2 text-xs text-muted">
+                  @ {fmtNum(conc)} {r.unit}/mL
+                </span>
               </p>
               {r.ceilingHit && (
                 <p className="mt-2 flex items-center gap-2 rounded-md border border-crimson bg-crimson/10 px-2 py-1 text-sm font-bold text-crimson">
                   <TriangleAlert size={16} aria-hidden />
                   CAPPED at {fmtNum(drug.maxMass!)} {r.unit}
-                  <span className="font-normal text-muted">(uncapped {fmtNum(r.uncappedHigh)} {r.unit})</span>
+                  <span className="font-normal text-muted">
+                    (uncapped {fmtNum(r.uncappedHigh)} {r.unit})
+                  </span>
                 </p>
               )}
             </div>
@@ -48,11 +57,19 @@ function DrugBody({ drug }: { drug: Drug }) {
       )}
 
       {drug.concentrations.length > 1 && (
-        <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label={`${drug.name} concentration`}>
+        <div
+          className="flex flex-wrap items-center gap-1.5"
+          role="group"
+          aria-label={`${drug.name} concentration`}
+        >
           <span className="text-xs text-muted">Vial:</span>
           {drug.concentrations.map((c) => (
-            <button key={c} type="button" onClick={() => setConc(drug.id, c)}
-              className={`min-h-12 min-w-12 rounded-lg border px-3 font-mono text-sm font-bold ${c === conc ? 'border-accent bg-accent text-base' : 'border-line bg-card'}`}>
+            <button
+              key={c}
+              type="button"
+              onClick={() => setConc(drug.id, c)}
+              className={`min-h-12 min-w-12 rounded-lg border px-3 font-mono text-sm font-bold ${c === conc ? 'border-accent bg-accent text-base' : 'border-line bg-card'}`}
+            >
               {fmtNum(c)}
             </button>
           ))}

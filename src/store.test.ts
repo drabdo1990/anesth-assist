@@ -4,7 +4,12 @@ import { sanitizePersisted, useStore } from './store'
 describe('sanitizePersisted', () => {
   it('accepts a well-formed state', () => {
     expect(
-      sanitizePersisted({ weightKg: 80, heightCm: 175, sex: 'female', concOverrides: { ketamine: 50 } }),
+      sanitizePersisted({
+        weightKg: 80,
+        heightCm: 175,
+        sex: 'female',
+        concOverrides: { ketamine: 50 },
+      }),
     ).toEqual({ weightKg: 80, heightCm: 175, sex: 'female', concOverrides: { ketamine: 50 } })
   })
   it('falls back to defaults on corrupt data', () => {
@@ -16,7 +21,9 @@ describe('sanitizePersisted', () => {
     ).toEqual(d)
   })
   it('drops non-numeric or non-positive concentration overrides', () => {
-    expect(sanitizePersisted({ concOverrides: { a: 5, b: 'x', c: -1 } }).concOverrides).toEqual({ a: 5 })
+    expect(sanitizePersisted({ concOverrides: { a: 5, b: 'x', c: -1 } }).concOverrides).toEqual({
+      a: 5,
+    })
   })
 })
 

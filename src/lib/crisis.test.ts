@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CICO_PLANS, LAST_STEPS, MH_STEPS, dantrolene, lastLipid, ryanodex } from './crisis'
+import { CICO_PLANS, dantrolene, LAST_STEPS, lastLipid, MH_STEPS, ryanodex } from './crisis'
 
 describe('lastLipid', () => {
   it('1.5 mL/kg bolus, 0.25 mL/kg/min infusion, 12 mL/kg total', () => {
@@ -64,10 +64,11 @@ describe('protocol data', () => {
 
 describe('Plan C wording', () => {
   it('no single step mentions both paralysis and sugammadex', () => {
-    for (const p of CICO_PLANS) for (const s of p.steps) {
-      const t = `${s.text} ${s.detail ?? ''}`.toLowerCase()
-      expect(t.includes('paralysis') && t.includes('sugammadex')).toBe(false)
-    }
+    for (const p of CICO_PLANS)
+      for (const s of p.steps) {
+        const t = `${s.text} ${s.detail ?? ''}`.toLowerCase()
+        expect(t.includes('paralysis') && t.includes('sugammadex')).toBe(false)
+      }
   })
   it('Plan C has the two ventilation branches', () => {
     const ids = CICO_PLANS.find((p) => p.id === 'C')!.steps.map((s) => s.id)

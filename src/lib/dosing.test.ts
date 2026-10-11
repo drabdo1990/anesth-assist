@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { computeScalars } from './biometrics'
-import { DRUGS } from './drugs'
 import { calcOption } from './dosing'
+import { DRUGS } from './drugs'
 import { fmtNum, fmtRange, fmtVol } from './format'
 
 const drug = (id: string) => DRUGS.find((d) => d.id === id)!

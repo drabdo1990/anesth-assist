@@ -27,8 +27,9 @@ jobs:
 
       - run: npm ci
 
-      # Deploy only if the type check and unit tests pass.
+      # Deploy only if the type check, lint and unit tests pass.
       - run: npx tsc --noEmit
+      - run: npm run lint
       - run: npm test
 
       - name: Build for the Pages sub-path

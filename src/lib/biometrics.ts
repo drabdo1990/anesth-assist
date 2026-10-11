@@ -40,9 +40,7 @@ export function computeScalars(
 
   // Janmahasatian LBW, capped at TBW
   const rawLbw =
-    sex === 'male'
-      ? (9270 * tbw) / (6680 + 216 * bmi)
-      : (9270 * tbw) / (8780 + 244 * bmi)
+    sex === 'male' ? (9270 * tbw) / (6680 + 216 * bmi) : (9270 * tbw) / (8780 + 244 * bmi)
   const lbw = Math.min(rawLbw, tbw)
 
   return { tbw, ibw, lbw, abw40, bmi }
@@ -54,12 +52,9 @@ export function inputAdvisories(tbw: number | null, heightCm: number | null) {
   if (finite(tbw) && (tbw < 2 || tbw > 250)) softWarnings.push('Weight looks unusual: check input')
   if (finite(heightCm) && heightCm < 100) softWarnings.push('Height looks unusual: check input')
 
-  const bmi =
-    isWeightValid(tbw) && isHeightValid(heightCm) ? tbw / (heightCm / 100) ** 2 : null
+  const bmi = isWeightValid(tbw) && isHeightValid(heightCm) ? tbw / (heightCm / 100) ** 2 : null
   // added: adult-only banner thresholds (height < 140 cm, weight < 30 kg, BMI >= 40)
   const adultOnly =
-    (finite(heightCm) && heightCm < 140) ||
-    (finite(tbw) && tbw < 30) ||
-    (bmi !== null && bmi >= 40)
+    (finite(heightCm) && heightCm < 140) || (finite(tbw) && tbw < 30) || (bmi !== null && bmi >= 40)
   return { softWarnings, adultOnly }
 }

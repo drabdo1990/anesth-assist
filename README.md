@@ -7,10 +7,15 @@ AnesthAssist is an offline anesthesia dosing and crisis cognitive aid, delivered
 ```
 npm run dev       # Vite dev server
 npm run build     # tsc --noEmit, then vite build (emits service worker and manifest)
-npm run test      # Vitest unit tests (run once)
+npm run test      # Vitest unit and component tests (run once)
+npm run lint      # Biome lint + format check
+npm run format    # Biome auto-fix (format and safe lint fixes)
 npm run preview   # serve the production build (localhost only unless --host is added)
 npm run icons     # regenerate PWA icons (scripts/make-icons.mjs)
 ```
+
+The pure calculation layer in `src/lib` is covered by unit tests; the components and views have jsdom
+tests (`.test.tsx`). `npm run lint` (Biome) and `tsc --noEmit` both run in CI before any deploy.
 
 ## Privacy design
 
