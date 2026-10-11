@@ -1,8 +1,14 @@
 import { Pause, Play, RotateCcw } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-const mmss = (s: number) =>
-  `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`
+// MM:SS, or H:MM:SS once elapsed reaches an hour so long crises stay readable.
+const fmtClock = (s: number) => {
+  const total = Math.floor(s)
+  const hh = Math.floor(total / 3600)
+  const mm = String(Math.floor((total % 3600) / 60)).padStart(2, '0')
+  const ss = String(total % 60).padStart(2, '0')
+  return hh > 0 ? `${hh}:${mm}:${ss}` : `${mm}:${ss}`
+}
 
 export function Timer({
   title,
@@ -96,14 +102,14 @@ export function Timer({
         <div>
           {remaining !== null && (
             <p className="font-mono text-4xl font-bold tabular-nums text-accent">
-              {mmss(remaining)}
+              {fmtClock(remaining)}
             </p>
           )}
           <p
             className={`font-mono tabular-nums ${remaining !== null ? 'text-sm text-muted' : 'text-4xl font-bold text-accent'}`}
           >
             {remaining !== null ? 'Elapsed ' : ''}
-            {mmss(elapsed)}
+            {fmtClock(elapsed)}
           </p>
         </div>
         <div className="flex gap-2">

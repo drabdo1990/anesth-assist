@@ -13,6 +13,15 @@ describe('parseVolume', () => {
     expect(parseVolume('1.5.2')).toEqual({ value: null, invalid: true }))
   it('rejects negative', () => expect(parseVolume('-3')).toEqual({ value: null, invalid: true }))
   it('zero is valid', () => expect(parseVolume('0')).toEqual({ value: 0, invalid: false }))
+  it('accepts mid-typing trailing dot', () =>
+    expect(parseVolume('5.')).toEqual({ value: 5, invalid: false }))
+  it('accepts leading dot', () => expect(parseVolume('.5')).toEqual({ value: 0.5, invalid: false }))
+  it('rejects hex', () => expect(parseVolume('0x10')).toEqual({ value: null, invalid: true }))
+  it('rejects scientific notation', () =>
+    expect(parseVolume('1e2')).toEqual({ value: null, invalid: true }))
+  it('rejects Infinity', () =>
+    expect(parseVolume('Infinity')).toEqual({ value: null, invalid: true }))
+  it('rejects signed plus', () => expect(parseVolume('+3')).toEqual({ value: null, invalid: true }))
 })
 
 describe('parseDecimalInput', () => {

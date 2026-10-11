@@ -27,4 +27,13 @@ describe('Timer', () => {
     })
     expect(screen.getByText(/rhythm \/ pulse check now/i)).toBeTruthy()
   })
+
+  it('shows H:MM:SS once elapsed passes an hour', () => {
+    render(<Timer title="Elapsed" label="CICO" />)
+    fireEvent.click(screen.getByRole('button', { name: /start cico timer/i }))
+    act(() => {
+      vi.advanceTimersByTime(5400000) // 1 h 30 min
+    })
+    expect(screen.getByText('1:30:00')).toBeTruthy()
+  })
 })

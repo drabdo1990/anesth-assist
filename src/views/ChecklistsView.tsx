@@ -1,6 +1,6 @@
 import * as Tabs from '@radix-ui/react-tabs'
 import { Copy, Eraser, ShieldCheck } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Checklist } from '../components/Checklist'
 import {
   buildPacuSummary,
@@ -17,6 +17,14 @@ const trigger =
 function Pacu() {
   const [values, setValues] = useState<Partial<Record<PacuKey, string>>>({})
   const [copied, setCopied] = useState<'idle' | 'ok' | 'fail'>('idle')
+  // keep a handle on the reset timeout so a quick second copy is not cut short
+  const copyTimer = useRef<number | null>(null)
+  useEffect(
+    () => () => {
+      if (copyTimer.current !== null) window.clearTimeout(copyTimer.current)
+    },
+    [],
+  )
   const summary = buildPacuSummary(values)
 
   return (
@@ -57,8 +65,9 @@ function Pacu() {
         <button
           type="button"
           onClick={async () => {
+            if (copyTimer.current !== null) window.clearTimeout(copyTimer.current)
             setCopied((await copyText(summary)) ? 'ok' : 'fail')
-            window.setTimeout(() => setCopied('idle'), 2500)
+            copyTimer.current = window.setTimeout(() => setCopied('idle'), 2500)
           }}
           className="flex min-h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-accent font-bold text-base active:opacity-80"
         >
