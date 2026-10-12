@@ -8,21 +8,24 @@ import { ScalarBadge } from './ScalarBadge'
 
 function DrugBody({ drug }: { drug: Drug }) {
   const scalars = useScalars()
+  const isPeds = useStore((s) => s.patientType === 'pediatric')
   const override = useStore((s) => s.concOverrides[drug.id])
   const setConc = useStore((s) => s.setConc)
   const conc = drug.concentrations.includes(override) ? override : drug.defaultConc
   const allFixed = drug.options.every((o) => o.basis === 'fixed')
+  // pediatric scalars collapse to TBW, so label the badge TBW instead of IBW/LBW
+  const badgeKind = isPeds ? ('tbw' as const) : drug.scalar
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-bold">{drug.name}</h3>
-        {scalars && !allFixed && <ScalarBadge kind={drug.scalar} kg={scalars[drug.scalar]} />}
+        {scalars && !allFixed && <ScalarBadge kind={badgeKind} kg={scalars[badgeKind]} />}
       </div>
 
       {!scalars ? (
         <p className="rounded-md border border-line bg-base p-3 text-sm text-muted">
-          Enter valid weight &amp; height
+          {isPeds ? 'Enter valid pediatric weight' : 'Enter valid weight & height'}
         </p>
       ) : (
         drug.options.map((opt) => {
@@ -34,10 +37,11 @@ function DrugBody({ drug }: { drug: Drug }) {
               </p>
               <p className="font-mono text-3xl font-bold tabular-nums text-accent">
                 {fmtRange(r.massLow, r.massHigh)} <span className="text-lg">{r.unit}</span>
+                {r.perHour && <span className="text-lg text-muted">/h</span>}
               </p>
               <p className="font-mono text-xl font-semibold tabular-nums">
                 {fmtRange(r.volLow, r.volHigh, fmtVol)}{' '}
-                <span className="text-base text-muted">mL</span>
+                <span className="text-base text-muted">{r.perHour ? 'mL/h' : 'mL'}</span>
                 <span className="ml-2 text-xs text-muted">
                   @ {fmtNum(conc)} {r.unit}/mL
                 </span>

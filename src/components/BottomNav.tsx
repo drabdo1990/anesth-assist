@@ -1,18 +1,20 @@
-import { Calculator, ClipboardCheck, Siren, Syringe } from 'lucide-react'
+import { Activity, Calculator, ClipboardCheck, Siren, Syringe, Wind } from 'lucide-react'
 
-export type TabId = 'calc' | 'crisis' | 'local' | 'lists'
+export type TabId = 'calc' | 'airway' | 'vent' | 'local' | 'crisis' | 'lists'
 
 const TABS = [
-  { id: 'calc', label: 'Calculator', Icon: Calculator },
+  { id: 'calc', label: 'Calc', Icon: Calculator },
+  { id: 'airway', label: 'Airway', Icon: Wind },
+  { id: 'vent', label: 'Vent', Icon: Activity },
+  { id: 'local', label: 'LA Max', Icon: Syringe },
   { id: 'crisis', label: 'Crisis', Icon: Siren },
-  { id: 'local', label: 'Local Max', Icon: Syringe },
-  { id: 'lists', label: 'Checklists', Icon: ClipboardCheck },
+  { id: 'lists', label: 'Lists', Icon: ClipboardCheck },
 ] as const
 
 export function BottomNav({ tab, onChange }: { tab: TabId; onChange: (t: TabId) => void }) {
   return (
     <nav
-      className="grid grid-cols-4 border-t border-line bg-card pb-[env(safe-area-inset-bottom)]"
+      className="grid grid-cols-6 border-t border-line bg-card pb-[env(safe-area-inset-bottom)]"
       aria-label="Main"
     >
       {TABS.map(({ id, label, Icon }) => {

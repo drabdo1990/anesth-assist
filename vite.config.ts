@@ -20,9 +20,9 @@ export default defineConfig(({ mode }) => ({
       manifest: {
         name: 'AnesthAssist',
         short_name: 'AnesthAssist',
-        description: 'Offline anesthesia dosing and crisis cognitive aid',
-        theme_color: '#090d16',
-        background_color: '#090d16',
+        description: 'Offline anesthesia dosing, airway, ventilation and crisis cognitive aid',
+        theme_color: '#080c14',
+        background_color: '#080c14',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '.',

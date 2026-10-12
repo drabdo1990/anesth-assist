@@ -1,12 +1,14 @@
 export type Sex = 'male' | 'female'
 export type ScalarKey = 'tbw' | 'ibw' | 'lbw'
+export type PatientType = 'adult' | 'pediatric'
 
 export interface Scalars {
   tbw: number
   ibw: number
   lbw: number
   abw40: number
-  bmi: number
+  // null in pediatric mode: BMI needs height, which peds mode does not collect
+  bmi: number | null
 }
 
 // added: soft input ranges (hard validity ranges below, advisories further down)
@@ -44,6 +46,25 @@ export function computeScalars(
   const lbw = Math.min(rawLbw, tbw)
 
   return { tbw, ibw, lbw, abw40, bmi }
+}
+
+// Pediatric mode: adult-derived scalars (IBW/LBW/ABW40) are meaningless in children,
+// so they collapse to TBW. Formulary pediatric dosing is TBW-based, which keeps
+// drug cards keyed on IBW/LBW numerically correct without special-casing every card.
+export function computePedsScalars(tbw: number | null): Scalars | null {
+  if (!isWeightValid(tbw)) return null
+  return { tbw, ibw: tbw, lbw: tbw, abw40: tbw, bmi: null }
+}
+
+export const AGE_RANGE = { min: 0, max: 14 } as const // years
+
+// Broseelow-style APLS estimate: Weight (kg) = (Age + 4) × 2
+export function estimatePedsWeight(ageYears: number): number {
+  return (ageYears + 4) * 2
+}
+
+export function isAgeValid(ageYears: number | null): ageYears is number {
+  return finite(ageYears) && ageYears >= AGE_RANGE.min && ageYears <= AGE_RANGE.max
 }
 
 export function inputAdvisories(tbw: number | null, heightCm: number | null) {

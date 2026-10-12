@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { computeScalars, inputAdvisories, isWeightValid } from './biometrics'
+import {
+  computePedsScalars,
+  computeScalars,
+  estimatePedsWeight,
+  inputAdvisories,
+  isAgeValid,
+  isWeightValid,
+} from './biometrics'
 
 describe('computeScalars', () => {
   it('male 175 cm / 80 kg matches hand-computed values', () => {
@@ -68,5 +75,30 @@ describe('inputAdvisories', () => {
     expect(inputAdvisories(25, 175).adultOnly).toBe(true)
     expect(inputAdvisories(140, 170).adultOnly).toBe(true) // BMI 48
     expect(inputAdvisories(70, 175).adultOnly).toBe(false)
+  })
+})
+
+describe('pediatric mode', () => {
+  it('estimates weight as (age + 4) × 2', () => {
+    expect(estimatePedsWeight(0)).toBe(8)
+    expect(estimatePedsWeight(4)).toBe(16)
+    expect(estimatePedsWeight(10)).toBe(28)
+  })
+  it('collapses IBW/LBW/ABW40 to TBW and nulls BMI', () => {
+    const s = computePedsScalars(18)!
+    expect(s).toEqual({ tbw: 18, ibw: 18, lbw: 18, abw40: 18, bmi: null })
+  })
+  it('returns null for missing or invalid weight', () => {
+    expect(computePedsScalars(null)).toBeNull()
+    expect(computePedsScalars(0)).toBeNull()
+    expect(computePedsScalars(NaN)).toBeNull()
+  })
+  it('validates age 0–14 years', () => {
+    expect(isAgeValid(0)).toBe(true)
+    expect(isAgeValid(0.5)).toBe(true) // 6 months
+    expect(isAgeValid(14)).toBe(true)
+    expect(isAgeValid(null)).toBe(false)
+    expect(isAgeValid(-1)).toBe(false)
+    expect(isAgeValid(15)).toBe(false)
   })
 })
