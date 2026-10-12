@@ -15,20 +15,32 @@ function DrugBody({ drug }: { drug: Drug }) {
   const allFixed = drug.options.every((o) => o.basis === 'fixed')
   // pediatric scalars collapse to TBW, so label the badge TBW instead of IBW/LBW
   const badgeKind = isPeds ? ('tbw' as const) : drug.scalar
+  const currentTarget = isPeds ? 'pediatric' : 'adult'
+  const visibleOptions = drug.options.filter(
+    (o) => !o.target || o.target === 'all' || o.target === currentTarget,
+  )
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-bold">{drug.name}</h3>
-        {scalars && !allFixed && <ScalarBadge kind={badgeKind} kg={scalars[badgeKind]} />}
+        {scalars && !allFixed && visibleOptions.length > 0 && (
+          <ScalarBadge kind={badgeKind} kg={scalars[badgeKind]} />
+        )}
       </div>
 
       {!scalars ? (
         <p className="rounded-md border border-line bg-base p-3 text-sm text-muted">
           {isPeds ? 'Enter valid pediatric weight' : 'Enter valid weight & height'}
         </p>
+      ) : visibleOptions.length === 0 ? (
+        <p className="rounded-md border border-line bg-base p-3 text-sm text-muted">
+          {isPeds
+            ? 'Adult indication only — no routine pediatric dosing.'
+            : 'Pediatric indication only.'}
+        </p>
       ) : (
-        drug.options.map((opt) => {
+        visibleOptions.map((opt) => {
           const r = calcOption(drug, opt, scalars, conc)
           return (
             <div key={opt.label} className="rounded-lg border border-line bg-base p-3">

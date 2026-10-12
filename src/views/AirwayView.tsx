@@ -159,33 +159,56 @@ export function AirwayView() {
         </p>
       </Section>
 
-      <Section title="Double-Lumen Tubes (left Robertshaw)">
-        <DataTable
-          head={['Height', 'Female', 'Male']}
-          rows={[
-            { key: 'short', cells: ['< 160 cm', '35 Fr', '35 Fr'] },
-            { key: 'medium', cells: ['160–175 cm', '37 Fr', '39 Fr'] },
-            { key: 'tall', cells: ['> 175 cm', '39–41 Fr', '39–41 Fr'] },
-          ]}
-        />
-        <Info
-          label={heightCm === null ? 'Enter height for suggestion' : `Suggestion @ ${heightCm} cm`}
-          value={dlt ?? '—'}
-          highlight={dlt !== null}
-        />
-        <DataTable
-          head={['Blocker', 'Requires']}
-          rows={BRONCHIAL_BLOCKERS.map((b) => ({
-            key: b.size,
-            cells: [
-              b.size,
-              <span key="req" className="font-sans">
-                {b.slt}
-              </span>,
-            ],
-          }))}
-        />
-      </Section>
+      {!isPeds ? (
+        <Section title="Double-Lumen Tubes (left Robertshaw)">
+          <DataTable
+            head={['Height', 'Female', 'Male']}
+            rows={[
+              { key: 'short', cells: ['< 160 cm', '35 Fr', '35 Fr'] },
+              { key: 'medium', cells: ['160–175 cm', '37 Fr', '39 Fr'] },
+              { key: 'tall', cells: ['> 175 cm', '39–41 Fr', '39–41 Fr'] },
+            ]}
+          />
+          <Info
+            label={
+              heightCm === null ? 'Enter height for suggestion' : `Suggestion @ ${heightCm} cm`
+            }
+            value={dlt ?? '—'}
+            highlight={dlt !== null}
+          />
+          <DataTable
+            head={['Blocker', 'Requires']}
+            rows={BRONCHIAL_BLOCKERS.map((b) => ({
+              key: b.size,
+              cells: [
+                b.size,
+                <span key="req" className="font-sans">
+                  {b.slt}
+                </span>,
+              ],
+            }))}
+          />
+        </Section>
+      ) : (
+        <Section title="Lung Isolation / Thoracic (Pediatric)">
+          <p className="rounded-lg border border-line bg-base p-3 text-sm text-muted">
+            Double-lumen tubes (DLT) are not used in small pediatric patients. Use a bronchial
+            blocker or endobronchial intubation of a single-lumen tube.
+          </p>
+          <DataTable
+            head={['Blocker', 'Requires']}
+            rows={BRONCHIAL_BLOCKERS.map((b) => ({
+              key: b.size,
+              cells: [
+                b.size,
+                <span key="req" className="font-sans">
+                  {b.slt}
+                </span>,
+              ],
+            }))}
+          />
+        </Section>
+      )}
 
       <Section title="Pharyngeal Airways & Blades">
         <DataTable

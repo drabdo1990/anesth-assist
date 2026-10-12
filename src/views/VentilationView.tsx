@@ -1,5 +1,5 @@
 import { TriangleAlert } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { NumField } from '../components/Stepper'
 import { useScalars } from '../hooks'
 import {
@@ -55,6 +55,11 @@ export function VentilationView() {
   const [peep, setPeep] = useState<number | null>(5)
   const [copd, setCopd] = useState(false)
   const [lap, setLap] = useState(false)
+
+  // Re-sync baseline RR when toggling between adult and pediatric patient
+  useEffect(() => {
+    setRr(isPeds ? 24 : 12)
+  }, [isPeds])
 
   const isPedsRr = isPeds
   const [rrMin, rrMax] = rrBaseline(isPedsRr)

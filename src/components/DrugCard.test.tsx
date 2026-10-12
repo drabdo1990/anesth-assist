@@ -30,4 +30,19 @@ describe('DrugCard', () => {
     expect(screen.getByText(/capped at 200 mg/i)).toBeTruthy()
     expect(screen.getByText(/uncapped 225 mg/i)).toBeTruthy()
   })
+
+  it('filters drug options by patientType: adult shows adult options only, peds shows peds options only', () => {
+    // Adult mode
+    useStore.setState({ patientType: 'adult', weightKg: 70, heightCm: 170, sex: 'male' })
+    const { unmount } = render(<DrugCard drug={byId('propofol')} />)
+    expect(screen.getByText(/Adult induction/i)).toBeTruthy()
+    expect(screen.queryByText(/Peds induction/i)).toBeNull()
+    unmount()
+
+    // Pediatric mode
+    useStore.setState({ patientType: 'pediatric', weightKg: 20, ageYears: 6 })
+    render(<DrugCard drug={byId('propofol')} />)
+    expect(screen.getByText(/Peds induction/i)).toBeTruthy()
+    expect(screen.queryByText(/Adult induction/i)).toBeNull()
+  })
 })

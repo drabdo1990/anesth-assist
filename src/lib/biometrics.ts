@@ -34,8 +34,8 @@ export function computeScalars(
 
   const bmi = tbw / (heightCm / 100) ** 2
 
-  // Devine IBW; if TBW < IBW use TBW
-  const devine = (sex === 'male' ? 50 : 45.5) + 0.905 * Math.max(0, heightCm - 152.4)
+  // Devine IBW; if TBW < calculated IBW, use TBW
+  const devine = (sex === 'male' ? 50 : 45.5) + 0.905 * (heightCm - 152.4)
   const ibw = tbw < devine ? tbw : devine
 
   const abw40 = tbw > ibw ? ibw + 0.4 * (tbw - ibw) : tbw
@@ -58,8 +58,13 @@ export function computePedsScalars(tbw: number | null): Scalars | null {
 
 export const AGE_RANGE = { min: 0, max: 14 } as const // years
 
-// Broseelow-style APLS estimate: Weight (kg) = (Age + 4) × 2
+// Age-appropriate weight estimation:
+// - Neonate (0 yr): 3.5 kg
+// - Infants (<1 yr in months): Weight (kg) = 0.5 × (ageYears × 12) + 4
+// - Children (1–14 yr): APLS formula: Weight (kg) = (ageYears + 4) × 2
 export function estimatePedsWeight(ageYears: number): number {
+  if (ageYears <= 0) return 3.5
+  if (ageYears < 1) return Math.round((ageYears * 12 * 0.5 + 4) * 10) / 10
   return (ageYears + 4) * 2
 }
 

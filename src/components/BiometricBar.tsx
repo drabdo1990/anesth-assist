@@ -55,6 +55,7 @@ export function BiometricBar({ compact = false }: { compact?: boolean }) {
   } = useStore()
   const [resetKey, setResetKey] = useState(0)
   const [ageUnit, setAgeUnit] = useState<AgeUnit>('years')
+  const [userEnteredWeight, setUserEnteredWeight] = useState(false)
   const scalars = useScalars()
   const isPeds = patientType === 'pediatric'
   const { softWarnings, adultOnly } = inputAdvisories(weightKg, heightCm)
@@ -79,12 +80,17 @@ export function BiometricBar({ compact = false }: { compact?: boolean }) {
     }
     const years = ageUnit === 'months' ? v / 12 : v
     setAge(years)
-    // auto-estimate weight if unknown: (age + 4) × 2
-    if (weightKg === null && isAgeValid(years)) setWeight(estimatePedsWeight(years))
+    // auto-estimate weight if not manually entered by user
+    if ((weightKg === null || !userEnteredWeight) && isAgeValid(years)) {
+      setWeight(estimatePedsWeight(years))
+    }
   }
 
   const useEstimatedWeight = () => {
-    if (isAgeValid(ageYears)) setWeight(estimatePedsWeight(ageYears))
+    if (isAgeValid(ageYears)) {
+      setUserEnteredWeight(false)
+      setWeight(estimatePedsWeight(ageYears))
+    }
   }
 
   return (
@@ -134,7 +140,10 @@ export function BiometricBar({ compact = false }: { compact?: boolean }) {
             label="Weight (TBW)"
             unit="kg"
             value={weightKg}
-            onChange={setWeight}
+            onChange={(w) => {
+              setUserEnteredWeight(w !== null)
+              setWeight(w)
+            }}
             stepper
             max={100}
           />
@@ -143,6 +152,7 @@ export function BiometricBar({ compact = false }: { compact?: boolean }) {
             <button
               type="button"
               onClick={() => {
+                setUserEnteredWeight(false)
                 clearBiometrics()
                 setResetKey((k) => k + 1)
               }}

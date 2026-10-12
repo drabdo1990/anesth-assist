@@ -26,9 +26,12 @@ describe('computeScalars', () => {
     expect(s.lbw).toBeCloseTo((9270 * 70) / (8780 + 244 * bmi), 6)
   })
 
-  it('height under 152.4 cm uses the base IBW (max(0, ...))', () => {
-    expect(computeScalars(60, 150, 'male')!.ibw).toBe(50)
-    expect(computeScalars(60, 150, 'female')!.ibw).toBe(45.5)
+  it('height under 152.4 cm correctly subtracts per Devine formula', () => {
+    // 150 cm: heightCm - 152.4 = -2.4 -> male: 50 + 0.905*(-2.4) = 47.828, female: 45.5 + 0.905*(-2.4) = 43.328
+    expect(computeScalars(60, 150, 'male')!.ibw).toBeCloseTo(47.828, 2)
+    expect(computeScalars(60, 150, 'female')!.ibw).toBeCloseTo(43.328, 2)
+    // 140 cm: heightCm - 152.4 = -12.4 -> female: 45.5 + 0.905*(-12.4) = 34.278
+    expect(computeScalars(50, 140, 'female')!.ibw).toBeCloseTo(34.278, 2)
   })
 
   it('IBW falls back to TBW when TBW < IBW, and ABW40 equals TBW', () => {
@@ -79,8 +82,10 @@ describe('inputAdvisories', () => {
 })
 
 describe('pediatric mode', () => {
-  it('estimates weight as (age + 4) × 2', () => {
-    expect(estimatePedsWeight(0)).toBe(8)
+  it('estimates weight: neonate 3.5 kg, infant months, child (age + 4) × 2', () => {
+    expect(estimatePedsWeight(0)).toBe(3.5) // neonate
+    expect(estimatePedsWeight(0.5)).toBe(7) // 6 months = 6*0.5 + 4 = 7 kg
+    expect(estimatePedsWeight(1)).toBe(10) // 1 year = (1 + 4) * 2 = 10 kg
     expect(estimatePedsWeight(4)).toBe(16)
     expect(estimatePedsWeight(10)).toBe(28)
   })

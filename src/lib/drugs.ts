@@ -10,12 +10,14 @@ export type Category =
   | 'Analgesia'
 
 export type DoseBasis = 'perKg' | 'fixed' | 'perKgMin' | 'perKgH' | 'fixedMin'
+export type PatientTarget = 'adult' | 'pediatric' | 'all'
 
 export interface DoseOption {
   label: string
   basis: DoseBasis
   low: number
   high?: number
+  target?: PatientTarget
 }
 
 export interface Drug {
@@ -30,6 +32,7 @@ export interface Drug {
   defaultConc: number
   note?: string
   companion?: Drug
+  target?: PatientTarget
 }
 
 export const CATEGORIES: Category[] = [
@@ -66,8 +69,20 @@ export const DRUGS: Drug[] = [
     scalar: 'tbw',
     unit: 'mg',
     options: [
-      { label: 'IV premed 0.02–0.04 mg/kg', basis: 'perKg', low: 0.02, high: 0.04 },
-      { label: 'Peds PO/IN 0.2–0.5 mg/kg', basis: 'perKg', low: 0.2, high: 0.5 },
+      {
+        label: 'IV premed 0.02–0.04 mg/kg',
+        basis: 'perKg',
+        low: 0.02,
+        high: 0.04,
+        target: 'adult',
+      },
+      {
+        label: 'Peds PO/IN 0.2–0.5 mg/kg',
+        basis: 'perKg',
+        low: 0.2,
+        high: 0.5,
+        target: 'pediatric',
+      },
     ],
     concentrations: [1, 5],
     defaultConc: 1,
@@ -94,8 +109,8 @@ export const DRUGS: Drug[] = [
     scalar: 'tbw',
     unit: 'mg',
     options: [
-      { label: 'Adult antiemetic 4–8 mg', basis: 'fixed', low: 4, high: 8 },
-      { label: 'Peds 0.15 mg/kg', basis: 'perKg', low: 0.15 },
+      { label: 'Adult antiemetic 4–8 mg', basis: 'fixed', low: 4, high: 8, target: 'adult' },
+      { label: 'Peds 0.15 mg/kg', basis: 'perKg', low: 0.15, target: 'pediatric' },
     ],
     concentrations: [4, 5],
     defaultConc: 4,
@@ -107,8 +122,8 @@ export const DRUGS: Drug[] = [
     scalar: 'tbw',
     unit: 'mg',
     options: [
-      { label: 'Adult 4 mg', basis: 'fixed', low: 4 },
-      { label: 'Peds 0.1 mg/kg', basis: 'perKg', low: 0.1 },
+      { label: 'Adult 4 mg', basis: 'fixed', low: 4, target: 'adult' },
+      { label: 'Peds 0.1 mg/kg', basis: 'perKg', low: 0.1, target: 'pediatric' },
     ],
     maxMass: 4,
     concentrations: [2],
@@ -123,9 +138,27 @@ export const DRUGS: Drug[] = [
     scalar: 'lbw',
     unit: 'mg',
     options: [
-      { label: 'Adult induction 1.5–2.5 mg/kg (LBW)', basis: 'perKg', low: 1.5, high: 2.5 },
-      { label: 'Obese / elderly 1.0–1.5 mg/kg (LBW)', basis: 'perKg', low: 1, high: 1.5 },
-      { label: 'Peds induction 2.5–3.5 mg/kg (TBW)', basis: 'perKg', low: 2.5, high: 3.5 },
+      {
+        label: 'Adult induction 1.5–2.5 mg/kg (LBW)',
+        basis: 'perKg',
+        low: 1.5,
+        high: 2.5,
+        target: 'adult',
+      },
+      {
+        label: 'Obese / elderly 1.0–1.5 mg/kg (LBW)',
+        basis: 'perKg',
+        low: 1,
+        high: 1.5,
+        target: 'adult',
+      },
+      {
+        label: 'Peds induction 2.5–3.5 mg/kg (TBW)',
+        basis: 'perKg',
+        low: 2.5,
+        high: 3.5,
+        target: 'pediatric',
+      },
     ],
     concentrations: [10],
     defaultConc: 10,
@@ -161,8 +194,8 @@ export const DRUGS: Drug[] = [
     scalar: 'tbw',
     unit: 'mg',
     options: [
-      { label: 'Adult 3–5 mg/kg', basis: 'perKg', low: 3, high: 5 },
-      { label: 'Peds 5–6 mg/kg', basis: 'perKg', low: 5, high: 6 },
+      { label: 'Adult 3–5 mg/kg', basis: 'perKg', low: 3, high: 5, target: 'adult' },
+      { label: 'Peds 5–6 mg/kg', basis: 'perKg', low: 5, high: 6, target: 'pediatric' },
     ],
     concentrations: [25],
     defaultConc: 25,
@@ -315,7 +348,7 @@ export const DRUGS: Drug[] = [
     category: 'Analgesia',
     scalar: 'tbw',
     unit: 'mg',
-    options: [{ label: 'Adult 15–30 mg IV', basis: 'fixed', low: 15, high: 30 }],
+    options: [{ label: 'Adult 15–30 mg IV', basis: 'fixed', low: 15, high: 30, target: 'adult' }],
     concentrations: [15, 30],
     defaultConc: 30,
     note: 'Caution: renal impairment, elderly, bleeding risk. Avoid in aortic surgery.',
