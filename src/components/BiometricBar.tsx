@@ -56,6 +56,13 @@ export function BiometricBar({ compact = false }: { compact?: boolean }) {
   const [resetKey, setResetKey] = useState(0)
   const [ageUnit, setAgeUnit] = useState<AgeUnit>('years')
   const [userEnteredWeight, setUserEnteredWeight] = useState(false)
+  // the store clears biometrics on a type switch; forget the manual-weight flag too
+  // (adjusting state during render, keyed on the previous type)
+  const [prevType, setPrevType] = useState(patientType)
+  if (prevType !== patientType) {
+    setPrevType(patientType)
+    setUserEnteredWeight(false)
+  }
   const scalars = useScalars()
   const isPeds = patientType === 'pediatric'
   const { softWarnings, adultOnly } = inputAdvisories(weightKg, heightCm)
@@ -107,6 +114,7 @@ export function BiometricBar({ compact = false }: { compact?: boolean }) {
               value={ageDisplay}
               onChange={onAgeChange}
               max={ageUnit === 'years' ? 14 : 168}
+              allowZero
             />
             <ToggleGroup.Root
               type="single"
@@ -231,7 +239,7 @@ export function BiometricBar({ compact = false }: { compact?: boolean }) {
             </>
           ) : (
             <span className="text-sm text-muted">
-              Enter weight (1–400 kg) and height (30–250 cm)
+              Enter weight (1–400 kg) and height (120–220 cm)
             </span>
           )}
         </div>
@@ -240,7 +248,7 @@ export function BiometricBar({ compact = false }: { compact?: boolean }) {
       {!compact && isPeds && (
         <div className="mt-2 flex flex-wrap gap-1.5" aria-live="polite">
           {isAgeValid(ageYears) ? (
-            pedsBaselinePills(ageYears).map((p) => (
+            pedsBaselinePills(ageYears, scalars?.tbw ?? null).map((p) => (
               <span
                 key={p.label}
                 className="inline-flex items-center gap-1.5 rounded-md border border-line bg-card px-2 py-1 font-mono text-xs font-bold tabular-nums"

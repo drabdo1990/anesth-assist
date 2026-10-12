@@ -144,6 +144,23 @@ describe('calcOption', () => {
     expect(r.uncappedHigh).toBe(2250)
   })
 
+  it('ondansetron adult 4 mg equals the ceiling and is not flagged as capped', () => {
+    const ond = drug('ondansetron')
+    const r = calcOption(ond, ond.options[0], male80, 2)
+    expect(r.massLow).toBe(4)
+    expect(r.ceilingHit).toBe(false)
+  })
+
+  it('peds dexamethasone 0.15 mg/kg caps at 8 mg; adult 4–8 mg is not flagged', () => {
+    const dex = drug('dexamethasone')
+    const heavy = computeScalars(100, 175, 'male')!
+    const peds = calcOption(dex, dex.options[1], heavy, 4)
+    expect(peds.massLow).toBe(8)
+    expect(peds.ceilingHit).toBe(true)
+    const adult = calcOption(dex, dex.options[0], heavy, 4)
+    expect([adult.massLow, adult.massHigh, adult.ceilingHit]).toEqual([4, 8, false])
+  })
+
   it('ondansetron peds dose caps at 4 mg', () => {
     const ond = drug('ondansetron')
     const heavy = computeScalars(150, 175, 'male')!

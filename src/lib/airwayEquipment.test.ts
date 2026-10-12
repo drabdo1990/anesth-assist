@@ -4,6 +4,7 @@ import {
   bladeRecommendation,
   dltSize,
   guedelSize,
+  infantEtt,
   pedsBaselinePills,
   pedsEtt,
   SAD_TABLE,
@@ -112,5 +113,26 @@ describe('pedsBaselinePills', () => {
     expect(labels).toContain('LMA size')
     expect(pills.find((p) => p.label === 'ETT uncuffed')?.value).toBe('5 mm')
     expect(pills.find((p) => p.label === 'LMA size')?.value).toBe('2')
+  })
+})
+
+describe('infantEtt (< 1 year)', () => {
+  it('term neonate 3.5 kg: 3.5 mm uncuffed at weight + 6 cm, not the 4.0 mm / 12 cm formula', () => {
+    const e = infantEtt(0, 3.5)
+    expect(e.uncuffed).toBe('3.5')
+    expect(e.oralDepth).toBe(9.5)
+    expect(e.depthRule).toMatch(/weight/)
+  })
+  it('preterm sizes have no cuffed recommendation', () => {
+    expect(infantEtt(0, 0.8)).toMatchObject({ uncuffed: '2.5', cuffed: null, oralDepth: 7 })
+    expect(infantEtt(0, 1.5)).toMatchObject({ uncuffed: '3.0', cuffed: null })
+  })
+  it('older infants use 3 × ID depth', () => {
+    expect(infantEtt(0.75, 8)).toMatchObject({ uncuffed: '4.0', cuffed: '3.5', oralDepth: 12 })
+  })
+  it('baseline pills switch to infant bands below 1 year', () => {
+    const pills = pedsBaselinePills(0, 3.5)
+    expect(pills.find((p) => p.label === 'ETT uncuffed')?.value).toBe('3.5 mm')
+    expect(pills.find((p) => p.label === 'Oral depth')?.value).toBe('9.5 cm')
   })
 })

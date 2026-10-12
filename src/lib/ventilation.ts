@@ -24,7 +24,8 @@ export const DP_LIMIT = 15 // cmH2O
 export const PEEP_BASELINE: [number, number] = [5, 8] // cmH2O intraoperative
 
 export function drivingPressure(pplat: number, peep: number): number | null {
-  if (!Number.isFinite(pplat) || !Number.isFinite(peep)) return null
+  // Pplat below PEEP is physiologically impossible: treat as invalid input
+  if (!Number.isFinite(pplat) || !Number.isFinite(peep) || pplat < peep) return null
   return pplat - peep
 }
 

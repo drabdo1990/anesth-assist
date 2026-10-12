@@ -1,7 +1,7 @@
 import { Minus, Plus } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
-import { parseDecimalInput } from '../lib/parseNumber'
+import { parseDecimalInput, parseVolume } from '../lib/parseNumber'
 
 interface Props {
   label: string
@@ -10,18 +10,29 @@ interface Props {
   onChange: (n: number | null) => void
   stepper?: boolean
   max?: number
+  /** accept 0 (e.g. age 0 for a neonate); weights and pressures stay strictly positive */
+  allowZero?: boolean
 }
 
-export function NumField({ label, unit, value, onChange, stepper, max = 999 }: Props) {
+export function NumField({
+  label,
+  unit,
+  value,
+  onChange,
+  stepper,
+  max = 999,
+  allowZero = false,
+}: Props) {
+  const parse = allowZero ? parseVolume : parseDecimalInput
   const [text, setText] = useState(value === null ? '' : String(value))
 
   // Re-sync only when the store value changes from outside; typing keeps its own text.
   useEffect(() => {
-    if (parseDecimalInput(text).value !== value) setText(value === null ? '' : String(value))
-  }, [value, text])
+    if (parse(text).value !== value) setText(value === null ? '' : String(value))
+  }, [value, text, parse])
 
   const inputRef = useRef<HTMLInputElement>(null)
-  const { invalid } = parseDecimalInput(text)
+  const { invalid } = parse(text)
 
   const bump = (d: number) => {
     // never invent a value: with an empty field, send the user to the input instead
@@ -53,7 +64,7 @@ export function NumField({ label, unit, value, onChange, stepper, max = 999 }: P
             value={text}
             onChange={(e) => {
               setText(e.target.value)
-              onChange(parseDecimalInput(e.target.value).value)
+              onChange(parse(e.target.value).value)
             }}
             aria-invalid={invalid}
             className={`min-h-12 w-full rounded-lg border ${invalid ? 'border-crimson' : 'border-line'} bg-card px-3 pr-10 font-mono text-xl font-bold tabular-nums text-accent outline-none focus:border-accent`}

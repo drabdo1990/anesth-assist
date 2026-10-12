@@ -112,6 +112,7 @@ export const DRUGS: Drug[] = [
       { label: 'Adult antiemetic 4–8 mg', basis: 'fixed', low: 4, high: 8, target: 'adult' },
       { label: 'Peds 0.15 mg/kg', basis: 'perKg', low: 0.15, target: 'pediatric' },
     ],
+    maxMass: 8, // added: antiemetic ceiling, not in the original brief
     concentrations: [4, 5],
     defaultConc: 4,
   },
@@ -311,8 +312,14 @@ export const DRUGS: Drug[] = [
     scalar: 'tbw',
     unit: 'mcg',
     options: [
-      { label: 'Bolus 50–100 mcg', basis: 'fixed', low: 50, high: 100 },
-      { label: 'Infusion 20–50 mcg/min', basis: 'fixedMin', low: 20, high: 50 },
+      { label: 'Bolus 50–100 mcg', basis: 'fixed', low: 50, high: 100, target: 'adult' },
+      {
+        label: 'Infusion 20–50 mcg/min',
+        basis: 'fixedMin',
+        low: 20,
+        high: 50,
+        target: 'adult',
+      },
     ],
     concentrations: [100],
     defaultConc: 100,
@@ -324,7 +331,7 @@ export const DRUGS: Drug[] = [
     category: 'Vasopressor',
     scalar: 'tbw',
     unit: 'mg',
-    options: [{ label: 'Bolus 5–10 mg IV', basis: 'fixed', low: 5, high: 10 }],
+    options: [{ label: 'Bolus 5–10 mg IV', basis: 'fixed', low: 5, high: 10, target: 'adult' }],
     concentrations: [5, 50],
     defaultConc: 5,
   },

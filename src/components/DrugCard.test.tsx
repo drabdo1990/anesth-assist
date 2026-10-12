@@ -45,4 +45,20 @@ describe('DrugCard', () => {
     expect(screen.getByText(/Peds induction/i)).toBeTruthy()
     expect(screen.queryByText(/Adult induction/i)).toBeNull()
   })
+
+  it('never shows fixed adult vasopressor boluses in pediatric mode', () => {
+    useStore.setState({ patientType: 'pediatric', weightKg: 10, ageYears: 1 })
+    for (const id of ['phenylephrine', 'ephedrine']) {
+      const { unmount } = render(<DrugCard drug={byId(id)} />)
+      expect(screen.getByText(/adult indication only/i)).toBeTruthy()
+      expect(screen.queryByText(/bolus/i)).toBeNull()
+      unmount()
+    }
+  })
+
+  it('does not flag a fixed dose that exactly equals the ceiling', () => {
+    useStore.setState({ patientType: 'adult', weightKg: 80, heightCm: 175 })
+    render(<DrugCard drug={byId('ondansetron')} />)
+    expect(screen.queryByText(/capped/i)).toBeNull()
+  })
 })

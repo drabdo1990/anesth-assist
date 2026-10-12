@@ -129,7 +129,11 @@ export function VentilationView() {
               {dp === null ? '—' : dp}
               <span className="text-sm text-muted"> cmH₂O</span>
             </p>
-            <p className="text-[11px] text-muted">Pplat − PEEP; target &lt; 14–15</p>
+            {pplat !== null && peep !== null && pplat < peep ? (
+              <p className="text-[11px] font-bold text-crimson">Pplat must be ≥ PEEP</p>
+            ) : (
+              <p className="text-[11px] text-muted">Pplat − PEEP; target &lt; 14–15</p>
+            )}
           </div>
           <div className="rounded-lg border border-line bg-card p-3 text-center">
             <p className="text-xs font-semibold text-muted">Plateau pressure</p>

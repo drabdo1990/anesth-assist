@@ -53,7 +53,8 @@ export function calcOption(
     massHigh: isRange ? high : null,
     volLow: low / conc,
     volHigh: isRange ? high / conc : null,
-    ceilingHit: drug.maxMass !== undefined && b.mass >= drug.maxMass,
+    // strictly above: a dose that exactly equals the ceiling is not "capped"
+    ceilingHit: drug.maxMass !== undefined && b.mass > drug.maxMass,
     uncappedHigh: b.mass,
     perHour,
   }

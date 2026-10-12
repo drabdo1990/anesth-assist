@@ -107,3 +107,15 @@ describe('pediatric mode', () => {
     expect(isAgeValid(15)).toBe(false)
   })
 })
+
+describe('adult height range', () => {
+  it('rejects heights where Devine IBW would be negative or meaningless', () => {
+    expect(computeScalars(70, 80, 'male')).toBeNull() // Devine ≈ −15.5 kg
+    expect(computeScalars(70, 119, 'female')).toBeNull()
+    expect(computeScalars(70, 221, 'male')).toBeNull()
+  })
+  it('keeps IBW positive across the whole accepted range', () => {
+    expect(computeScalars(70, 120, 'female')!.ibw).toBeGreaterThan(0)
+    expect(computeScalars(70, 120, 'male')!.ibw).toBeGreaterThan(0)
+  })
+})

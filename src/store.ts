@@ -42,6 +42,15 @@ export function sanitizePersisted(raw: unknown): Persisted {
   }
 }
 
+// Only provider preferences are stored. Patient biometrics stay in memory so the
+// next case never opens with the previous patient's weight (zero PHI storage).
+type StoredPrefs = Pick<Persisted, 'patientType' | 'concOverrides'>
+
+export function storedPrefs(raw: unknown): StoredPrefs {
+  const { patientType, concOverrides } = sanitizePersisted(raw)
+  return { patientType, concOverrides }
+}
+
 const memoryStorage = {
   getItem: () => null,
   setItem: () => {},
@@ -57,7 +66,14 @@ export const useStore = create<State>()(
       ageYears: null,
       sex: 'male',
       concOverrides: {},
-      setPatientType: (patientType) => set({ patientType }),
+      // a type switch means a different patient: drop biometrics so adult values
+      // never feed pediatric doses (or vice versa)
+      setPatientType: (patientType) =>
+        set((s) =>
+          s.patientType === patientType
+            ? {}
+            : { patientType, weightKg: null, heightCm: null, ageYears: null },
+        ),
       setWeight: (weightKg) => set({ weightKg }),
       setHeight: (heightCm) => set({ heightCm }),
       setAge: (ageYears) => set({ ageYears }),
@@ -76,21 +92,17 @@ export const useStore = create<State>()(
     }),
     {
       name: 'anesthassist-v1',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() =>
         typeof localStorage === 'undefined' ? memoryStorage : localStorage,
       ),
-      // v1 -> v2 adds patientType/ageYears; sanitize fills safe defaults
-      migrate: (persisted) => sanitizePersisted(persisted),
-      partialize: (s): Persisted => ({
+      // v2 -> v3 stops persisting biometrics; older stored values are discarded
+      migrate: (persisted) => storedPrefs(persisted),
+      partialize: (s): StoredPrefs => ({
         patientType: s.patientType,
-        weightKg: s.weightKg,
-        heightCm: s.heightCm,
-        ageYears: s.ageYears,
-        sex: s.sex,
         concOverrides: s.concOverrides,
       }),
-      merge: (persisted, current) => ({ ...current, ...sanitizePersisted(persisted) }),
+      merge: (persisted, current) => ({ ...current, ...storedPrefs(persisted) }),
     },
   ),
 )

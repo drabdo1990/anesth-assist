@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { sanitizePersisted, useStore } from './store'
+import { sanitizePersisted, storedPrefs, useStore } from './store'
 
 const defaults = {
   patientType: 'adult',
@@ -53,6 +53,46 @@ describe('sanitizePersisted', () => {
     expect(sanitizePersisted({ concOverrides: { a: 5, b: 'x', c: -1 } }).concOverrides).toEqual({
       a: 5,
     })
+  })
+})
+
+describe('persistence (zero PHI storage)', () => {
+  it('stores only provider preferences, never patient biometrics', () => {
+    useStore.setState({
+      patientType: 'adult',
+      weightKg: 80,
+      heightCm: 175,
+      ageYears: null,
+      sex: 'female',
+      concOverrides: { ketamine: 50 },
+    })
+    const stored = useStore.persist.getOptions().partialize!(useStore.getState())
+    expect(stored).toEqual({ patientType: 'adult', concOverrides: { ketamine: 50 } })
+  })
+  it('discards biometrics left in storage by older versions', () => {
+    expect(storedPrefs({ patientType: 'pediatric', weightKg: 80, concOverrides: {} })).toEqual({
+      patientType: 'pediatric',
+      concOverrides: {},
+    })
+  })
+})
+
+describe('setPatientType', () => {
+  it('clears biometrics when the patient type changes', () => {
+    useStore.setState({ patientType: 'adult', weightKg: 70, heightCm: 170, ageYears: null })
+    useStore.getState().setPatientType('pediatric')
+    const s = useStore.getState()
+    expect([s.patientType, s.weightKg, s.heightCm, s.ageYears]).toEqual([
+      'pediatric',
+      null,
+      null,
+      null,
+    ])
+  })
+  it('keeps biometrics when re-selecting the same type', () => {
+    useStore.setState({ patientType: 'adult', weightKg: 70, heightCm: 170 })
+    useStore.getState().setPatientType('adult')
+    expect(useStore.getState().weightKg).toBe(70)
   })
 })
 

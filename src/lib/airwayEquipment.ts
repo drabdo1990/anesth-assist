@@ -38,6 +38,36 @@ export function pedsEtt(ageYears: number): PedsEtt {
   }
 }
 
+/** The age formulas above are validated from 1 year; below that, use infantEtt. */
+export const AGE_FORMULA_MIN_YEARS = 1
+
+export interface InfantEtt {
+  band: string
+  uncuffed: string // mm ID (may be a range)
+  cuffed: string | null // null: cuffed tube not recommended at this size
+  oralDepth: number // cm at lip
+  depthRule: string
+}
+
+// added: weight/age bands for < 1 yr (not in the brief). The age formulas oversize
+// neonatal tubes (4.0 mm) and over-insert them (12 cm), risking endobronchial intubation.
+// Depth: neonates (< 1 month or < 3 kg) use weight + 6 cm; older infants 3 × uncuffed ID.
+export function infantEtt(ageYears: number, weightKg: number): InfantEtt {
+  const neonatal = ageYears < 1 / 12 || weightKg < 3
+  const depth = (id: number) =>
+    neonatal
+      ? { oralDepth: Math.round((weightKg + 6) * 2) / 2, depthRule: 'weight (kg) + 6' }
+      : { oralDepth: round1(id * 3), depthRule: '3 × ID' }
+
+  if (weightKg < 1) return { band: 'Preterm < 1 kg', uncuffed: '2.5', cuffed: null, ...depth(2.5) }
+  if (weightKg < 2) return { band: 'Preterm 1–2 kg', uncuffed: '3.0', cuffed: null, ...depth(3) }
+  if (weightKg < 3)
+    return { band: 'Neonate 2–3 kg', uncuffed: '3.0–3.5', cuffed: null, ...depth(3) }
+  if (ageYears < 0.5)
+    return { band: 'Term – 6 months', uncuffed: '3.5', cuffed: '3.0', ...depth(3.5) }
+  return { band: '6–12 months', uncuffed: '4.0', cuffed: '3.5', ...depth(4) }
+}
+
 /** Max recommended ETT cuff pressure to prevent subglottic ischemic damage. */
 export const CUFF_PRESSURE_MAX = 25 // cmH2O (target 20–25)
 
@@ -123,12 +153,26 @@ export function bladeRecommendation(ageYears: number | null, isPeds: boolean): s
 }
 
 /** Age-appropriate baseline parameter pills for the pediatric biometric strip. */
-export function pedsBaselinePills(ageYears: number): { label: string; value: string }[] {
+export function pedsBaselinePills(
+  ageYears: number,
+  weightKg: number | null = null,
+): { label: string; value: string }[] {
+  const kg = weightKg ?? estimatePedsWeight(ageYears)
+  const lma = { label: 'LMA size', value: selectSad(kg)?.size ?? '—' }
+  if (ageYears < AGE_FORMULA_MIN_YEARS) {
+    const i = infantEtt(ageYears, kg)
+    return [
+      { label: 'ETT uncuffed', value: `${i.uncuffed} mm` },
+      { label: 'ETT cuffed', value: i.cuffed ? `${i.cuffed} mm` : '—' },
+      { label: 'Oral depth', value: `${i.oralDepth} cm` },
+      lma,
+    ]
+  }
   const e = pedsEtt(ageYears)
   return [
     { label: 'ETT uncuffed', value: `${e.uncuffedId} mm` },
     { label: 'ETT cuffed', value: `${e.cuffedId} mm` },
     { label: 'Oral depth', value: `${e.oralDepth} cm` },
-    { label: 'LMA size', value: selectSad(estimatePedsWeight(ageYears))?.size ?? '—' },
+    lma,
   ]
 }

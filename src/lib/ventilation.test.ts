@@ -62,3 +62,11 @@ describe('volutraumaRisk', () => {
     expect(volutraumaRisk(NaN, 70)).toBe(false)
   })
 })
+
+describe('drivingPressure input validity', () => {
+  it('rejects Pplat below PEEP instead of reporting a negative (green) value', () => {
+    expect(drivingPressure(5, 10)).toBeNull()
+    expect(drivingTone(drivingPressure(5, 10))).toBeNull()
+    expect(drivingPressure(10, 10)).toBe(0)
+  })
+})

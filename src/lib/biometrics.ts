@@ -25,12 +25,20 @@ function isHeightValid(h: number | null): h is number {
   return finite(h) && h >= HEIGHT_RANGE.min && h <= HEIGHT_RANGE.max
 }
 
+// Adult formulas (Devine, Janmahasatian, DLT sizing) are only defined for adult
+// statures; below ~100 cm Devine IBW goes negative and every IBW dose with it.
+export const ADULT_HEIGHT_RANGE = { min: 120, max: 220 } as const
+
+export function isAdultHeightValid(h: number | null): h is number {
+  return finite(h) && h >= ADULT_HEIGHT_RANGE.min && h <= ADULT_HEIGHT_RANGE.max
+}
+
 export function computeScalars(
   tbw: number | null,
   heightCm: number | null,
   sex: Sex,
 ): Scalars | null {
-  if (!isWeightValid(tbw) || !isHeightValid(heightCm)) return null
+  if (!isWeightValid(tbw) || !isAdultHeightValid(heightCm)) return null
 
   const bmi = tbw / (heightCm / 100) ** 2
 

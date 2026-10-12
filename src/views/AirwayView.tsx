@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { useScalars } from '../hooks'
 import {
+  AGE_FORMULA_MIN_YEARS,
   adultEtt,
   BRONCHIAL_BLOCKERS,
   bladeRecommendation,
@@ -8,11 +9,12 @@ import {
   dltSize,
   GUEDEL_TABLE,
   guedelSize,
+  infantEtt,
   pedsEtt,
   SAD_TABLE,
   selectSad,
 } from '../lib/airwayEquipment'
-import { estimatePedsWeight, isAgeValid } from '../lib/biometrics'
+import { estimatePedsWeight, isAdultHeightValid, isAgeValid } from '../lib/biometrics'
 import { useStore } from '../store'
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
@@ -95,8 +97,11 @@ export function AirwayView() {
   const sad = selectSad(weight)
   const guedel = guedelSize(weight)
   const ett = adultEtt(sex)
-  const dlt = heightCm !== null ? dltSize(heightCm, sex) : null
-  const pEtt = isPeds && isAgeValid(ageYears) ? pedsEtt(ageYears) : null
+  const dlt = isAdultHeightValid(heightCm) ? dltSize(heightCm, sex) : null
+  const infant = isPeds && isAgeValid(ageYears) && ageYears < AGE_FORMULA_MIN_YEARS
+  const pEtt = isPeds && isAgeValid(ageYears) && !infant ? pedsEtt(ageYears) : null
+  const iEtt =
+    infant && ageYears !== null ? infantEtt(ageYears, weight ?? estimatePedsWeight(ageYears)) : null
 
   return (
     <div className="space-y-6">
@@ -111,7 +116,23 @@ export function AirwayView() {
             <Info label="Depth at teeth" value={`≈ ${ett.depthLow}–${ett.depthHigh} cm`} />
           </div>
         )}
+        {iEtt && (
+          <div className="space-y-2">
+            <Info label={`Uncuffed ID (${iEtt.band})`} value={`${iEtt.uncuffed} mm`} highlight />
+            <Info
+              label="Cuffed ID"
+              value={iEtt.cuffed ? `${iEtt.cuffed} mm` : 'not recommended'}
+              highlight={iEtt.cuffed !== null}
+            />
+            <Info label={`Oral depth (${iEtt.depthRule})`} value={`≈ ${iEtt.oralDepth} cm`} />
+            <p className="rounded-md border border-amber/60 bg-amber/10 px-2 py-1 text-xs font-semibold text-amber">
+              Under 1 year: weight/age bands shown. The (age/4) formulas apply from 1 year and
+              oversize and over-insert neonatal tubes.
+            </p>
+          </div>
+        )}
         {isPeds &&
+          !iEtt &&
           (pEtt ? (
             <div className="space-y-2">
               <Info label="Uncuffed ID ((age/4)+4)" value={`${pEtt.uncuffedId} mm`} highlight />
