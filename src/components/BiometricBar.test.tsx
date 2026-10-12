@@ -12,6 +12,7 @@ describe('BiometricBar pediatric weight estimation', () => {
       heightCm: null,
       ageYears: null,
       sex: 'male',
+      weightIsManual: false,
       concOverrides: {},
     })
   })
@@ -53,5 +54,26 @@ describe('BiometricBar pediatric weight estimation', () => {
     fireEvent.change(ageInput, { target: { value: '5' } })
     expect(useStore.getState().weightKg).toBe(18)
     expect(weightInput.value).toBe('18')
+  })
+
+  it('preserves a manually entered weight across a remount (tab switch)', () => {
+    const first = render(<BiometricBar />)
+    const ageInput = () =>
+      first.container.querySelector('input[aria-label="Age"]') as HTMLInputElement
+    const weightInput = () =>
+      first.container.querySelector('input[aria-label="Weight (TBW)"]') as HTMLInputElement
+
+    fireEvent.change(ageInput(), { target: { value: '4' } }) // auto-estimates 16
+    fireEvent.change(weightInput(), { target: { value: '18' } }) // user types a scale weight
+    expect(useStore.getState().weightKg).toBe(18)
+    first.unmount()
+
+    // App unmounts the full bar when switching to Crisis/Lists and remounts it on return
+    const second = render(<BiometricBar />)
+    fireEvent.change(
+      second.container.querySelector('input[aria-label="Age"]') as HTMLInputElement,
+      { target: { value: '6' } },
+    )
+    expect(useStore.getState().weightKg).toBe(18) // manual weight survives the remount
   })
 })

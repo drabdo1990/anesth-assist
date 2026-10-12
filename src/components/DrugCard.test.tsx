@@ -61,4 +61,15 @@ describe('DrugCard', () => {
     render(<DrugCard drug={byId('ondansetron')} />)
     expect(screen.queryByText(/capped/i)).toBeNull()
   })
+
+  it('hides the weight badge for weight-independent drugs but keeps it for per-kg drugs', () => {
+    useStore.setState({ patientType: 'adult', weightKg: 80, heightCm: 175, sex: 'male' })
+    // phenylephrine bolus and infusion are both weight-independent (fixed/fixedMin)
+    const phe = render(<DrugCard drug={byId('phenylephrine')} />)
+    expect(phe.container.textContent).not.toMatch(/TBW:/)
+    phe.unmount()
+
+    const propofol = render(<DrugCard drug={byId('propofol')} />)
+    expect(propofol.container.textContent).toMatch(/LBW:/)
+  })
 })

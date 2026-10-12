@@ -12,7 +12,7 @@ function DrugBody({ drug }: { drug: Drug }) {
   const override = useStore((s) => s.concOverrides[drug.id])
   const setConc = useStore((s) => s.setConc)
   const conc = drug.concentrations.includes(override) ? override : drug.defaultConc
-  const allFixed = drug.options.every((o) => o.basis === 'fixed')
+  const weightIndependent = drug.options.every((o) => o.basis === 'fixed' || o.basis === 'fixedMin')
   // pediatric scalars collapse to TBW, so label the badge TBW instead of IBW/LBW
   const badgeKind = isPeds ? ('tbw' as const) : drug.scalar
   const currentTarget = isPeds ? 'pediatric' : 'adult'
@@ -24,7 +24,7 @@ function DrugBody({ drug }: { drug: Drug }) {
     <div className="space-y-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-lg font-bold">{drug.name}</h3>
-        {scalars && !allFixed && visibleOptions.length > 0 && (
+        {scalars && !weightIndependent && visibleOptions.length > 0 && (
           <ScalarBadge kind={badgeKind} kg={scalars[badgeKind]} />
         )}
       </div>

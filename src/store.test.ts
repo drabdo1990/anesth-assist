@@ -113,3 +113,24 @@ describe('clearBiometrics', () => {
     expect(s.concOverrides).toEqual({ a: 5 })
   })
 })
+
+describe('weightIsManual', () => {
+  it('setWeight records an estimated weight; setWeightManual records a typed one', () => {
+    useStore.getState().setWeight(12)
+    expect(useStore.getState().weightIsManual).toBe(false)
+    useStore.getState().setWeightManual(18)
+    expect(useStore.getState().weightIsManual).toBe(true)
+    useStore.getState().setWeightManual(null)
+    expect(useStore.getState().weightIsManual).toBe(false)
+  })
+  it('a type switch resets the manual flag so peds estimate can resume', () => {
+    useStore.setState({ patientType: 'pediatric', weightKg: 18, weightIsManual: true })
+    useStore.getState().setPatientType('adult')
+    expect(useStore.getState().weightIsManual).toBe(false)
+  })
+  it('clearBiometrics resets the manual flag', () => {
+    useStore.setState({ weightKg: 18, weightIsManual: true })
+    useStore.getState().clearBiometrics()
+    expect(useStore.getState().weightIsManual).toBe(false)
+  })
+})

@@ -12,8 +12,17 @@ interface Persisted {
 }
 
 interface State extends Persisted {
+  /**
+   * True when the user typed the weight, false when it came from the age estimate.
+   * Kept in the store (in memory only) so a BiometricBar remount on a tab switch
+   * cannot forget it and silently overwrite a measured weight.
+   */
+  weightIsManual: boolean
   setPatientType: (t: PatientType) => void
+  /** programmatic / estimated weight: not user-entered */
   setWeight: (n: number | null) => void
+  /** user typed the weight field */
+  setWeightManual: (n: number | null) => void
   setHeight: (n: number | null) => void
   setAge: (n: number | null) => void
   setSex: (s: Sex) => void
@@ -65,6 +74,7 @@ export const useStore = create<State>()(
       heightCm: null,
       ageYears: null,
       sex: 'male',
+      weightIsManual: false,
       concOverrides: {},
       // a type switch means a different patient: drop biometrics so adult values
       // never feed pediatric doses (or vice versa)
@@ -72,9 +82,16 @@ export const useStore = create<State>()(
         set((s) =>
           s.patientType === patientType
             ? {}
-            : { patientType, weightKg: null, heightCm: null, ageYears: null },
+            : {
+                patientType,
+                weightKg: null,
+                heightCm: null,
+                ageYears: null,
+                weightIsManual: false,
+              },
         ),
-      setWeight: (weightKg) => set({ weightKg }),
+      setWeight: (weightKg) => set({ weightKg, weightIsManual: false }),
+      setWeightManual: (weightKg) => set({ weightKg, weightIsManual: weightKg !== null }),
       setHeight: (heightCm) => set({ heightCm }),
       setAge: (ageYears) => set({ ageYears }),
       setSex: (sex) => set({ sex }),
@@ -86,6 +103,7 @@ export const useStore = create<State>()(
           heightCm: null,
           ageYears: null,
           sex: 'male',
+          weightIsManual: false,
           // note: patient type and concentration overrides survive a clear
           concOverrides: s.concOverrides,
         })),
