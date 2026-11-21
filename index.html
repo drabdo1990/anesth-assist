@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#090d16" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      (function () {
+        var p = null;
+        try { p = localStorage.getItem('anesthassist-theme'); } catch (e) {}
+        var dark = p === 'dark' || (p !== 'light' && (!window.matchMedia || matchMedia('(prefers-color-scheme: dark)').matches));
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.content = dark ? '#090d16' : '#f8fafc';
+      })();
+    </script>
+    <meta name="description" content="AnesthAssist - Zero-latency, mobile-first clinical decision support for operating room anesthesia providers." />
+    <title>AnesthAssist | OR Clinical Decision Support</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  </head>
+  <body class="bg-clinical-bg text-slate-100 antialiased selection:bg-cyan-500 selection:text-black min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
