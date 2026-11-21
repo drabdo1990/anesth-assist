@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AnesthAssist</string>
+    <string name="app_subtitle">OR cognitive aid · works offline</string>
+    <string name="disclaimer_author">Dr. Mohamed Abdelwahab</string>
+    <string name="disclaimer_text">Educational and cognitive aid. Clinical judgment supercedes all calculated suggestions.</string>
+    <string name="tab_preop">Pre-op</string>
+    <string name="tab_plans">Plans</string>
+    <string name="tab_intraop">Intra-op</string>
+    <string name="tab_postop">Post-op</string>
+    <string name="tab_diseases">Diseases</string>
+    <string name="tab_sos">SOS</string>
+    <string name="cd_references">Open references</string>
+    <string name="cd_settings">Open settings</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_emergency">Open emergency support</string>
+    <string name="cd_new_case">Reset all case inputs</string>
+    <string name="cd_copy">Copy to clipboard</string>
+    <string name="cd_search">Search</string>
+    <string name="cd_clear">Clear</string>
+</resources>
