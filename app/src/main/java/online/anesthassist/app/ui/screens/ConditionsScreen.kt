@@ -24,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
@@ -52,10 +53,21 @@ import online.anesthassist.app.data.ClinicalRepository
 import online.anesthassist.app.data.ConditionRecord
 import online.anesthassist.app.ui.components.NoSourceBox
 import online.anesthassist.app.ui.components.SourceTagsRow
+import online.anesthassist.app.ui.components.WarningBanner
+import online.anesthassist.app.ui.components.WarningLevel
 import online.anesthassist.app.ui.theme.JetBrainsMonoFontFamily
 import online.anesthassist.app.ui.theme.LocalClinicalColors
 import online.anesthassist.app.viewmodel.AnesthViewModel
 import online.anesthassist.app.viewmodel.EmergencyKind
+
+private const val EMERGENCY_CATEGORY = "Acute Intraoperative Emergencies"
+
+private enum class ConditionScope(val label: String) {
+    ALL("All"),
+    EMERGENCIES("Emergencies"),
+    SUBSPECIALTY("Subspecialty"),
+    STOELTING("Stoelting 8e"),
+}
 
 @Composable
 fun ConditionsScreen(
@@ -65,16 +77,47 @@ fun ConditionsScreen(
     val c = LocalClinicalColors.current
     val bundle = repository.bundle
     var query by remember { mutableStateOf("") }
+    var scope by remember { mutableStateOf(ConditionScope.ALL) }
     var selectedChapter by remember { mutableStateOf<Int?>(null) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
     var expandedId by remember { mutableStateOf<String?>(null) }
 
-    val chapters = remember(bundle.conditions) {
-        bundle.conditions.map { it.chapter }.distinct().sorted()
+    val emergencyCount = remember(bundle.conditions) {
+        bundle.conditions.count { it.category == EMERGENCY_CATEGORY }
+    }
+    val stoeltingCount = remember(bundle.conditions) {
+        bundle.conditions.count { it.chapter != null }
+    }
+    val subspecialtyCount = remember(bundle.conditions) {
+        bundle.conditions.count { it.chapter == null && it.category != EMERGENCY_CATEGORY }
     }
 
-    val filtered = remember(query, selectedChapter, bundle.conditions) {
+    val chapters = remember(bundle.conditions) {
+        bundle.conditions.mapNotNull { it.chapter }.distinct().sorted()
+    }
+    val subspecialtyCategories = remember(bundle.conditions) {
+        bundle.conditions
+            .filter { it.chapter == null && it.category != null && it.category != EMERGENCY_CATEGORY }
+            .mapNotNull { it.category }
+            .distinct()
+            .sorted()
+    }
+
+    val filtered = remember(query, scope, selectedChapter, selectedCategory, bundle.conditions) {
         val searched = searchConditions(bundle.conditions, bundle.stoeltingChapters, query)
-        if (selectedChapter == null) searched else searched.filter { it.chapter == selectedChapter }
+        val scoped = when (scope) {
+            ConditionScope.ALL -> searched
+            ConditionScope.EMERGENCIES -> searched.filter { it.category == EMERGENCY_CATEGORY }
+            ConditionScope.SUBSPECIALTY -> searched.filter { it.chapter == null && it.category != EMERGENCY_CATEGORY }
+            ConditionScope.STOELTING -> searched.filter { it.chapter != null }
+        }
+        when {
+            scope == ConditionScope.STOELTING && selectedChapter != null ->
+                scoped.filter { it.chapter == selectedChapter }
+            scope == ConditionScope.SUBSPECIALTY && selectedCategory != null ->
+                scoped.filter { it.category == selectedCategory }
+            else -> scoped
+        }
     }
 
     LazyColumn(
@@ -84,10 +127,16 @@ fun ConditionsScreen(
     ) {
         item(key = "cond_search") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "Stoelting 8e rare diseases ($stoeltingCount), Acute Intraoperative Emergencies ($emergencyCount), and Subspecialty board cards ($subspecialtyCount). Offline search; nothing you type is stored.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = c.textMuted,
+                )
+
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    placeholder = { Text("Search 110 conditions, abbreviations, chapters...") },
+                    placeholder = { Text("Search ${bundle.conditions.size} conditions, emergencies, aliases...") },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(R.string.cd_search)) },
                     trailingIcon = {
                         if (query.isNotEmpty()) {
@@ -114,26 +163,98 @@ fun ConditionsScreen(
                         color = c.textMuted,
                     )
                     Text(
-                        text = "Stoelting 8e · Offline",
+                        text = "185 Cards · Offline",
                         style = MaterialTheme.typography.labelSmall,
                         fontFamily = JetBrainsMonoFontFamily,
                         color = c.cyan,
                     )
                 }
 
+                // Primary scope filter chips
                 Row(
                     modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    ChapterChip("All", selectedChapter == null, "chap_all") { selectedChapter = null }
-                    chapters.forEach { ch ->
-                        val title = bundle.stoeltingChapters[ch.toString()] ?: "Ch $ch"
-                        ChapterChip(
-                            label = "Ch $ch · $title",
-                            active = selectedChapter == ch,
-                            testTag = "chap_$ch",
-                        ) {
-                            selectedChapter = if (selectedChapter == ch) null else ch
+                    FilterChip(
+                        label = "All (${bundle.conditions.size})",
+                        active = scope == ConditionScope.ALL,
+                        amberTone = false,
+                        testTag = "scope_all",
+                    ) {
+                        scope = ConditionScope.ALL
+                        selectedChapter = null
+                        selectedCategory = null
+                    }
+                    FilterChip(
+                        label = "Emergencies ($emergencyCount)",
+                        active = scope == ConditionScope.EMERGENCIES,
+                        amberTone = true,
+                        testTag = "scope_emergencies",
+                    ) {
+                        scope = ConditionScope.EMERGENCIES
+                        selectedChapter = null
+                        selectedCategory = null
+                    }
+                    FilterChip(
+                        label = "Subspecialty ($subspecialtyCount)",
+                        active = scope == ConditionScope.SUBSPECIALTY,
+                        amberTone = false,
+                        testTag = "scope_subspecialty",
+                    ) {
+                        scope = ConditionScope.SUBSPECIALTY
+                        selectedChapter = null
+                        selectedCategory = null
+                    }
+                    FilterChip(
+                        label = "Stoelting 8e ($stoeltingCount)",
+                        active = scope == ConditionScope.STOELTING,
+                        amberTone = false,
+                        testTag = "scope_stoelting",
+                    ) {
+                        scope = ConditionScope.STOELTING
+                        selectedChapter = null
+                        selectedCategory = null
+                    }
+                }
+
+                // Contextual secondary filter row
+                if (scope == ConditionScope.STOELTING) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        FilterChip("All Chapters", selectedChapter == null, false, "chap_all") {
+                            selectedChapter = null
+                        }
+                        chapters.forEach { ch ->
+                            val title = bundle.stoeltingChapters[ch.toString()] ?: "Ch $ch"
+                            FilterChip(
+                                label = "Ch $ch · $title",
+                                active = selectedChapter == ch,
+                                amberTone = false,
+                                testTag = "chap_$ch",
+                            ) {
+                                selectedChapter = if (selectedChapter == ch) null else ch
+                            }
+                        }
+                    }
+                } else if (scope == ConditionScope.SUBSPECIALTY) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        FilterChip("All Subspecialties", selectedCategory == null, false, "subcat_all") {
+                            selectedCategory = null
+                        }
+                        subspecialtyCategories.forEach { cat ->
+                            FilterChip(
+                                label = cat,
+                                active = selectedCategory == cat,
+                                amberTone = false,
+                                testTag = "subcat_${cat.lowercase().replace(' ', '_')}",
+                            ) {
+                                selectedCategory = if (selectedCategory == cat) null else cat
+                            }
                         }
                     }
                 }
@@ -157,14 +278,27 @@ fun ConditionsScreen(
         } else {
             items(filtered, key = { it.id }) { condition ->
                 val expanded = expandedId == condition.id
-                val chapterName = bundle.stoeltingChapters[condition.chapter.toString()] ?: "Chapter ${condition.chapter}"
+                val subtitleLine = if (condition.chapter != null) {
+                    val chName = bundle.stoeltingChapters[condition.chapter.toString()] ?: "Chapter ${condition.chapter}"
+                    "Ch ${condition.chapter} · $chName"
+                } else {
+                    condition.category ?: "Clinical Reference"
+                }
+                val summaryAttribution = if (condition.chapter != null) {
+                    val chName = bundle.stoeltingChapters[condition.chapter.toString()] ?: "Chapter ${condition.chapter}"
+                    "Stoelting's Anesthesia and Co-Existing Disease, 8th edition (2022), chapter ${condition.chapter}: $chName."
+                } else {
+                    "Anesthesia Considerations for Oral Board Exam — ${condition.category ?: "Clinical Reference"}."
+                }
                 ConditionCard(
                     condition = condition,
-                    chapterName = chapterName,
+                    subtitleLine = subtitleLine,
+                    summaryAttribution = summaryAttribution,
                     expanded = expanded,
                     sourceTags = repository.sourceTags(condition.sourceIds),
                     onToggleExpand = { expandedId = if (expanded) null else condition.id },
-                    onOpenMh = { viewModel.openEmergency(EmergencyKind.MH) },
+                    onOpenEmergency = { kind -> viewModel.openEmergency(kind) },
+                    onOpenChecklist = { id -> viewModel.openChecklist(id) },
                 )
             }
         }
@@ -174,14 +308,38 @@ fun ConditionsScreen(
 }
 
 @Composable
-private fun ChapterChip(label: String, active: Boolean, testTag: String, onClick: () -> Unit) {
+private fun FilterChip(
+    label: String,
+    active: Boolean,
+    amberTone: Boolean,
+    testTag: String,
+    onClick: () -> Unit,
+) {
     val c = LocalClinicalColors.current
+    val bg = when {
+        active && amberTone -> c.amber
+        active -> c.cyan
+        amberTone -> c.amberBg
+        else -> c.card
+    }
+    val border = when {
+        active && amberTone -> c.amber
+        active -> c.cyan
+        amberTone -> c.amberBorder
+        else -> c.border
+    }
+    val fg = when {
+        active && amberTone -> Color.Black
+        active -> if (c.isDark) Color.Black else Color.White
+        amberTone -> c.amber
+        else -> c.textSecondary
+    }
     Box(
         modifier = Modifier
             .heightIn(min = 40.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(if (active) c.cyan else c.card)
-            .border(1.dp, if (active) c.cyan else c.border, RoundedCornerShape(10.dp))
+            .background(bg)
+            .border(1.dp, border, RoundedCornerShape(10.dp))
             .clickable { onClick() }
             .padding(horizontal = 10.dp)
             .testTag(testTag),
@@ -190,7 +348,8 @@ private fun ChapterChip(label: String, active: Boolean, testTag: String, onClick
         Text(
             text = label,
             style = MaterialTheme.typography.labelSmall,
-            color = if (active) (if (c.isDark) Color.Black else Color.White) else c.textSecondary,
+            color = fg,
+            fontWeight = if (active || amberTone) FontWeight.Bold else FontWeight.Medium,
         )
     }
 }
@@ -198,21 +357,36 @@ private fun ChapterChip(label: String, active: Boolean, testTag: String, onClick
 @Composable
 private fun ConditionCard(
     condition: ConditionRecord,
-    chapterName: String,
+    subtitleLine: String,
+    summaryAttribution: String,
     expanded: Boolean,
     sourceTags: List<String>,
     onToggleExpand: () -> Unit,
-    onOpenMh: () -> Unit,
+    onOpenEmergency: (EmergencyKind) -> Unit,
+    onOpenChecklist: (String) -> Unit,
 ) {
     val c = LocalClinicalColors.current
-    val hasMhCrisis = condition.crisis == "mh"
+    val isEmergency = condition.category == EMERGENCY_CATEGORY
+    val crisisKind = when (condition.crisis) {
+        "mh" -> EmergencyKind.MH
+        "last" -> EmergencyKind.LAST
+        else -> null
+    }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
             .background(c.card)
-            .border(1.dp, if (expanded) c.cyanBorder else c.border, RoundedCornerShape(14.dp))
+            .border(
+                1.dp,
+                when {
+                    expanded -> c.cyanBorder
+                    isEmergency -> c.amberBorder
+                    else -> c.border
+                },
+                RoundedCornerShape(14.dp),
+            )
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -235,7 +409,24 @@ private fun ConditionCard(
                         color = c.textPrimary,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    if (hasMhCrisis) {
+                    if (isEmergency) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(c.amberBg)
+                                .border(1.dp, c.amberBorder, RoundedCornerShape(6.dp))
+                                .padding(horizontal = 6.dp, vertical = 2.dp),
+                        ) {
+                            Text(
+                                text = "EMERGENCY",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontFamily = JetBrainsMonoFontFamily,
+                                color = c.amber,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                    if (crisisKind != null) {
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
@@ -243,14 +434,20 @@ private fun ConditionCard(
                                 .border(1.dp, c.redBorder, RoundedCornerShape(6.dp))
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                         ) {
-                            Text("MH TRIGGER", style = MaterialTheme.typography.labelSmall, color = c.red, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = "SOS: ${crisisKind.label}",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontFamily = JetBrainsMonoFontFamily,
+                                color = c.red,
+                                fontWeight = FontWeight.Bold,
+                            )
                         }
                     }
                 }
                 Text(
-                    text = "Ch ${condition.chapter} · $chapterName",
+                    text = subtitleLine,
                     style = MaterialTheme.typography.labelSmall,
-                    color = c.textMuted,
+                    color = if (isEmergency) c.amber else c.textMuted,
                 )
                 if (condition.aliases.isNotEmpty()) {
                     Text(
@@ -270,18 +467,16 @@ private fun ConditionCard(
         }
 
         if (expanded) {
-            if (hasMhCrisis) {
-                Button(
-                    onClick = onOpenMh,
-                    colors = ButtonDefaults.buttonColors(containerColor = c.red, contentColor = Color.White),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("open_mh_${condition.id}"),
-                ) {
-                    Icon(Icons.Default.Warning, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text("Open SOS · Malignant Hyperthermia Protocol", fontWeight = FontWeight.Bold)
-                }
+            val summaryTitle = when {
+                condition.chapter != null -> "Textbook summary"
+                isEmergency -> "Board emergency summary"
+                else -> "Board subspecialty summary"
             }
+            WarningBanner(
+                level = WarningLevel.INFO,
+                title = summaryTitle,
+                body = "A short summary of $summaryAttribution Check current society guidance and your local protocol.",
+            )
 
             val plan = condition.plan
             if (plan == null) {
@@ -291,6 +486,39 @@ private fun ConditionCard(
                 ConditionSectionBlock("Intra-op", plan.intraop, c.emerald, c.emeraldBg, c.emeraldBorder)
                 ConditionSectionBlock("Avoid", plan.avoid, c.red, c.redBg, c.redBorder)
                 ConditionSectionBlock("Post-op", plan.postop, c.purple, c.purpleBg, c.purpleBorder)
+            }
+
+            if (crisisKind != null) {
+                Button(
+                    onClick = { onOpenEmergency(crisisKind) },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.red, contentColor = Color.White),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("open_sos_${condition.id}"),
+                ) {
+                    Icon(Icons.Default.Warning, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = if (crisisKind == EmergencyKind.MH) "Open MH crisis steps" else "Open LAST crisis steps",
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+
+            if (!condition.checklistId.isNullOrBlank()) {
+                Button(
+                    onClick = { onOpenChecklist(condition.checklistId) },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.cyanBg, contentColor = c.cyan),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .border(1.dp, c.cyanBorder, RoundedCornerShape(10.dp))
+                        .testTag("open_checklist_${condition.id}"),
+                ) {
+                    Icon(Icons.Default.FactCheck, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Open crisis checklist in Lists", fontWeight = FontWeight.Bold)
+                }
             }
 
             if (sourceTags.isNotEmpty()) {

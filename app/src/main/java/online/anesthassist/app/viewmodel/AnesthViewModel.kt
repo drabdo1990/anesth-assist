@@ -15,12 +15,15 @@ import online.anesthassist.app.calc.BiometricResult
 import online.anesthassist.app.calc.HandoffInput
 import online.anesthassist.app.calc.Sex
 import online.anesthassist.app.calc.computePatientBiometrics
+import online.anesthassist.app.BuildConfig
 import online.anesthassist.app.data.ClinicalBundle
 import online.anesthassist.app.data.ClinicalRepository
 import online.anesthassist.app.data.CreatinineUnit
 import online.anesthassist.app.data.PersistedPrefs
 import online.anesthassist.app.data.PrefsRepository
 import online.anesthassist.app.data.ThemePreference
+import online.anesthassist.app.data.UpdateChecker
+import online.anesthassist.app.data.UpdateStatus
 import java.util.UUID
 
 enum class AppTab(val key: String) {
@@ -88,8 +91,10 @@ data class AnesthUiState(
     val checks: Map<String, Boolean> = emptyMap(),
     val audioEnabled: Boolean = true,
     val creatinineUnit: CreatinineUnit = CreatinineUnit.MGDL,
+    val updateRepo: String = "drabdo1990/anesth-helper",
 
     // In-memory only (cleared on process kill or New Case)
+    val updateStatus: UpdateStatus = UpdateStatus.Idle,
     val patient: PatientInput = PatientInput(),
     val activeTab: AppTab = AppTab.INTRAOP,
     val intraopView: IntraopView = IntraopView.DOSING,
@@ -105,6 +110,7 @@ data class AnesthUiState(
     val emergencyKind: EmergencyKind = EmergencyKind.LAST,
     val settingsOpen: Boolean = false,
     val referencesOpen: Boolean = false,
+    val requestedChecklistId: String? = null,
 
     val doseValues: Map<String, Double> = emptyMap(),
     val selectedDose: Map<String, String> = emptyMap(),
@@ -190,6 +196,7 @@ class AnesthViewModel(application: Application) : AndroidViewModel(application) 
             checks = saved.checks,
             audioEnabled = saved.audioEnabled,
             creatinineUnit = crUnit,
+            updateRepo = saved.updateRepo,
             vent = VentState(scenarioId = saved.ventScenarioId, mlPerKgPbw = defaultVt),
         )
     }
@@ -206,6 +213,7 @@ class AnesthViewModel(application: Application) : AndroidViewModel(application) 
                 checks = s.checks,
                 audioEnabled = s.audioEnabled,
                 creatinineUnit = s.creatinineUnit.name,
+                updateRepo = s.updateRepo,
             )
         )
     }
@@ -228,6 +236,14 @@ class AnesthViewModel(application: Application) : AndroidViewModel(application) 
     fun setEmergencyKind(kind: EmergencyKind) = _state.update { it.copy(emergencyKind = kind) }
     fun setSettingsOpen(open: Boolean) = _state.update { it.copy(settingsOpen = open) }
     fun setReferencesOpen(open: Boolean) = _state.update { it.copy(referencesOpen = open) }
+    fun openChecklist(checklistId: String) = _state.update {
+        it.copy(
+            activeTab = AppTab.INTRAOP,
+            intraopView = IntraopView.LISTS,
+            requestedChecklistId = checklistId,
+        )
+    }
+    fun clearRequestedChecklist() = _state.update { it.copy(requestedChecklistId = null) }
 
     // Patient
     fun setWeight(kg: Double?) = _state.update { it.copy(patient = it.patient.copy(tbwKg = kg)) }
@@ -262,6 +278,7 @@ class AnesthViewModel(application: Application) : AndroidViewModel(application) 
                 cicoAlertEverySec = 0,
                 timers = emptyMap(),
                 checks = emptyMap(),
+                requestedChecklistId = null,
                 vent = VentState(scenarioId = s.vent.scenarioId, mlPerKgPbw = scenario?.tidalVolumeMlPerKgPbw?.target),
             )
         }
@@ -276,6 +293,20 @@ class AnesthViewModel(application: Application) : AndroidViewModel(application) 
     fun setMhContact(contact: String) = updateAndPersist { it.copy(mhContact = contact.take(60)) }
     fun setAudioEnabled(enabled: Boolean) = updateAndPersist { it.copy(audioEnabled = enabled) }
     fun setCreatinineUnit(unit: CreatinineUnit) = updateAndPersist { it.copy(creatinineUnit = unit) }
+    fun setUpdateRepo(repo: String) = updateAndPersist {
+        it.copy(updateRepo = repo.take(100), updateStatus = UpdateStatus.Idle)
+    }
+    fun checkForUpdates() {
+        val repo = _state.value.updateRepo
+        _state.update { it.copy(updateStatus = UpdateStatus.Checking) }
+        viewModelScope.launch {
+            val status = UpdateChecker.checkLatestRelease(
+                rawRepo = repo,
+                currentVersion = BuildConfig.VERSION_NAME,
+            )
+            _state.update { it.copy(updateStatus = status) }
+        }
+    }
     fun touchRecent(medId: String) = updateAndPersist {
         it.copy(recents = (listOf(medId) + it.recents.filter { r -> r != medId }).take(6))
     }

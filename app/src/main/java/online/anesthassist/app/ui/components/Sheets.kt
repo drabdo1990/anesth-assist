@@ -1,5 +1,7 @@
 package online.anesthassist.app.ui.components
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -26,9 +29,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -43,13 +49,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import online.anesthassist.app.BuildConfig
 import online.anesthassist.app.R
 import online.anesthassist.app.data.ClinicalRepository
 import online.anesthassist.app.data.ThemePreference
+import online.anesthassist.app.data.UpdateChecker
+import online.anesthassist.app.data.UpdateStatus
 import online.anesthassist.app.ui.theme.JetBrainsMonoFontFamily
 import online.anesthassist.app.ui.theme.LocalClinicalColors
 import online.anesthassist.app.viewmodel.AnesthUiState
@@ -154,6 +164,120 @@ fun SettingsOverlay(
                     onCheckedChange = viewModel::setAudioEnabled,
                     modifier = Modifier.testTag("audio_toggle"),
                 )
+            }
+
+            val context = LocalContext.current
+            fun openSafeUrl(url: String) {
+                if (UpdateChecker.isSafeGitHubUrl(url)) {
+                    runCatching {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+                    }
+                }
+            }
+
+            ClinicalPanel(
+                title = "App Updates",
+                subtitle = "Installed: v${BuildConfig.VERSION_NAME} (build ${BuildConfig.VERSION_CODE}). Manual check only — no background network traffic and zero patient data sent.",
+            ) {
+                OutlinedTextField(
+                    value = state.updateRepo,
+                    onValueChange = viewModel::setUpdateRepo,
+                    label = { Text("GitHub Repository (owner/repo)") },
+                    placeholder = { Text("drabdo1990/anesth-helper") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().testTag("update_repo_input"),
+                )
+
+                Button(
+                    onClick = { viewModel.checkForUpdates() },
+                    enabled = state.updateStatus !is UpdateStatus.Checking,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = c.cyan,
+                        contentColor = if (c.isDark) Color.Black else Color.White,
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("check_updates_button"),
+                ) {
+                    if (state.updateStatus is UpdateStatus.Checking) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp,
+                            color = if (c.isDark) Color.Black else Color.White,
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Checking GitHub Releases...", fontWeight = FontWeight.Bold)
+                    } else {
+                        Icon(Icons.Default.SystemUpdate, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text("Check for Updates", fontWeight = FontWeight.Bold)
+                    }
+                }
+
+                when (val status = state.updateStatus) {
+                    is UpdateStatus.Idle -> {}
+                    is UpdateStatus.Checking -> {}
+                    is UpdateStatus.UpToDate -> {
+                        WarningBanner(
+                            level = WarningLevel.EMERALD,
+                            title = "Up to date (v${status.currentVersion})",
+                            body = "Latest GitHub release is ${status.latestTag}.",
+                        )
+                        if (status.apkUrl != null) {
+                            Button(
+                                onClick = { openSafeUrl(status.apkUrl) },
+                                colors = ButtonDefaults.buttonColors(containerColor = c.cardInset, contentColor = c.cyan),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("redownload_apk_button"),
+                            ) {
+                                Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text("Re-download ${status.latestTag} APK")
+                            }
+                        }
+                    }
+                    is UpdateStatus.UpdateAvailable -> {
+                        WarningBanner(
+                            level = WarningLevel.INFO,
+                            title = "Update available: v${status.latestVersion}",
+                            body = status.notes.ifBlank { "${status.releaseName} is ready to download (current: v${status.currentVersion})." },
+                        )
+                        Button(
+                            onClick = { openSafeUrl(status.downloadUrl) },
+                            colors = ButtonDefaults.buttonColors(containerColor = c.emerald, contentColor = Color.White),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("download_update_button"),
+                        ) {
+                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = if (status.isDirectApk) "Download v${status.latestVersion} APK" else "Open Release Page",
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                    }
+                    is UpdateStatus.NoReleases -> {
+                        WarningBanner(
+                            level = WarningLevel.AMBER,
+                            title = "No GitHub Releases published yet",
+                            body = "Push your native Android project to ${status.repo} (main branch) so GitHub Actions publishes the APK release automatically.",
+                        )
+                        Button(
+                            onClick = { openSafeUrl(status.releasesPageUrl) },
+                            colors = ButtonDefaults.buttonColors(containerColor = c.cardInset, contentColor = c.cyan),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("open_releases_page_button"),
+                        ) {
+                            Text("Open GitHub Releases Page")
+                        }
+                    }
+                    is UpdateStatus.Error -> {
+                        WarningBanner(
+                            level = WarningLevel.RED,
+                            title = "Update check failed",
+                            body = status.message,
+                        )
+                    }
+                }
             }
 
             WarningBanner(

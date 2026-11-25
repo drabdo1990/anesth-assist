@@ -530,9 +530,11 @@ data class ConditionRecord(
     val id: String,
     val name: String,
     val aliases: List<String> = emptyList(),
-    val chapter: Int,
+    val chapter: Int? = null,
+    val category: String? = null,
     val plan: ConditionPlan? = null,
     val crisis: String? = null,
+    val checklistId: String? = null,
     val sourceIds: List<String> = emptyList(),
 )
 

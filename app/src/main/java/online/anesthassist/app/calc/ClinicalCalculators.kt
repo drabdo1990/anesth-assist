@@ -755,16 +755,22 @@ fun searchConditions(
     query: String,
 ): List<ConditionRecord> {
     val q = normalizeSearch(query)
-    if (q.isEmpty()) return conditions
+    if (q.isEmpty()) {
+        return conditions.sortedWith(compareBy<ConditionRecord> { it.plan == null }.thenBy { it.name.lowercase(Locale.US) })
+    }
     val tokens = q.split(" ").filter { it.isNotEmpty() }
     return conditions.filter { c ->
         val haystack = normalizeSearch(
             buildString {
                 append(c.name).append(' ')
                 c.aliases.forEach { append(it).append(' ') }
-                append(chapters[c.chapter.toString()].orEmpty())
+                c.chapter?.let { append(chapters[it.toString()].orEmpty()).append(' ') }
+                c.category?.let { append(it).append(' ') }
             }
         )
         tokens.all { haystack.contains(it) }
-    }
+    }.sortedWith(
+        compareBy<ConditionRecord> { if (normalizeSearch(it.name).startsWith(q)) 0 else 1 }
+            .thenBy { it.name.lowercase(Locale.US) }
+    )
 }

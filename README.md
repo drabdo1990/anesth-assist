@@ -6,7 +6,7 @@ Offline clinical decision support and perioperative cognitive aid for anesthesio
 
 ## Architecture & Privacy
 
-- **100% Offline:** All clinical tables, drug formularies, Stoelting 8e condition summaries, and guidelines are bundled locally in `app/src/main/assets/clinical_data.json`. The app requests **zero Android permissions** (not even `INTERNET`).
+- **Offline-First Clinical Engine:** All clinical tables, drug formularies, 185 condition summaries, and guidelines are bundled locally in `app/src/main/assets/clinical_data.json`. The only Android permission requested is `INTERNET`, used strictly when you manually tap **Check for Updates** in Settings (zero background traffic, zero analytics, zero PHI transmitted).
 - **Zero-PHI Persistence:** Patient biometrics (weight, height, sex, age, creatinine), risk score answers, dose logs, local anesthetic entries, and crisis timers remain strictly in memory (RAM) and clear on process exit or **New Case**. Only non-PHI UI preferences (theme, preferred weight scalar, concentration choices, MH hotline string, audio toggle, creatinine unit, and anonymous checklist ticks) are stored in `SharedPreferences` (`allowBackup="false"`).
 - **Theme:** High-contrast dark OR palette and light clinical palette with System / Light / Dark selection. The **SOS** emergency overlay always stays in high-contrast dark mode.
 
@@ -25,5 +25,5 @@ Offline clinical decision support and perioperative cognitive aid for anesthesio
    - **Ventilation:** PBW-based tidal volume, minute ventilation, driving pressure, plateau pressure alerts, scenario targets, modes, alarms, and troubleshooting.
    - **Lists:** Pre-induction, WHO timeout, and QRH crisis checklists.
 5. **Post-op:** **Apfel** PONV score, 2025 ASER prophylaxis plan, **Modified Aldrete**, **PADSS**, **4AT** delirium screen, emergence/extubation checklist, and **Anonymous PACU Handoff** generator.
-6. **Diseases:** Instant accent/hyphen-insensitive search and chapter browser across all **110 Stoelting 8e** co-existing diseases with Pre-op, Intra-op, Avoid, Post-op guidance and direct MH crisis launch.
-7. **SOS Emergency Overlay:** Always-reachable red SOS button opening **LAST** (20% lipid emulsion bolus/infusion & 12 mL/kg cap), **MH** (2.5 mg/kg dantrolene & Dantrium/Ryanodex vial calculator), and **CICO** (DAS Plans A–D with live stopwatch and interval tone alerts).
+6. **Diseases:** Instant accent/hyphen-insensitive search and category/chapter filters across **185 conditions** (**110 Stoelting 8e** rare diseases, **24 Acute Intraoperative Emergencies**, and **51 Subspecialty** board cards) with Pre-op, Intra-op, Avoid, Post-op guidance plus direct cross-links into **SOS** (MH / LAST) and **QRH Crisis Checklists** in Lists.
+7. **SOS Emergency Overlay:** Always-reachable red SOS button opening **LAST** (20% lipid emulsion bolus/infusion & 12 mL/kg cap), **MH** (2.5 mg/kg dantrolene & Dantrium/Ryanodex vial calculator), and **CICO** (DAS Plans A–D with live stopwatch and interval tone alerts). First-response banners, MH hotline, and step checklists are immediately visible even before patient weight is entered.

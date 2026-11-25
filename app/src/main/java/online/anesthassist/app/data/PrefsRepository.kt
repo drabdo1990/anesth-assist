@@ -24,6 +24,7 @@ data class PersistedPrefs(
     val checks: Map<String, Boolean> = emptyMap(),
     val audioEnabled: Boolean = true,
     val creatinineUnit: String = CreatinineUnit.MGDL.name,
+    val updateRepo: String = "drabdo1990/anesth-helper",
 )
 
 class PrefsRepository(context: Context) {

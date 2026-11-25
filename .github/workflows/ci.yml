@@ -5,9 +5,12 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
-    name: Build Installable APK
+    name: Build & Publish Installable APK
     runs-on: ubuntu-latest
 
     steps:
@@ -39,12 +42,41 @@ jobs:
               -dname "CN=Android Debug,O=Android,C=US"
           fi
 
+      - name: Extract app versionName
+        id: version
+        run: |
+          VER=$(grep -E 'versionName\s*=' app/build.gradle.kts | head -n 1 | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "name=${VER:-1.0.0}" >> "$GITHUB_OUTPUT"
+
+      - name: Run unit tests (pediatric dosing audit)
+        run: gradle :app:testDebugUnitTest --no-daemon
+
       - name: Build Debug APK
         run: gradle assembleDebug --no-daemon
 
-      - name: Upload Installable APK
+      - name: Stage versioned APK
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk "AnesthAssist-v${{ steps.version.outputs.name }}.apk"
+
+      - name: Upload Installable APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: AnesthAssist-APK
-          path: app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            app/build/outputs/apk/debug/app-debug.apk
+            AnesthAssist-v${{ steps.version.outputs.name }}.apk
           if-no-files-found: error
+
+      - name: Publish GitHub Release for In-App Updates
+        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.name }}
+          name: AnesthAssist v${{ steps.version.outputs.name }}
+          body: |
+            Automated native Android APK build for AnesthAssist v${{ steps.version.outputs.name }}.
+            Download `AnesthAssist-v${{ steps.version.outputs.name }}.apk` to install or update on Android.
+          files: AnesthAssist-v${{ steps.version.outputs.name }}.apk
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

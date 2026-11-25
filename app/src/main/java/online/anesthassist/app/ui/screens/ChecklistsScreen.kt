@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -34,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,12 +68,28 @@ fun IntraopListsScreen(
     val lists = remember { repository.listsForPhase("intraop") }
     val groups = remember(lists) { lists.map { it.group }.distinct() }
     var selectedGroup by remember { mutableStateOf("All") }
+    val listState = rememberLazyListState()
 
     val shown = remember(lists, selectedGroup) {
         if (selectedGroup == "All") lists else lists.filter { it.group == selectedGroup }
     }
 
+    LaunchedEffect(state.requestedChecklistId) {
+        val targetId = state.requestedChecklistId ?: return@LaunchedEffect
+        val match = lists.find { it.id == targetId }
+        if (match != null) {
+            selectedGroup = match.group
+            val filtered = lists.filter { it.group == match.group }
+            val idx = filtered.indexOfFirst { it.id == targetId }
+            if (idx >= 0) {
+                listState.scrollToItem(idx + 1)
+            }
+            viewModel.clearRequestedChecklist()
+        }
+    }
+
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),

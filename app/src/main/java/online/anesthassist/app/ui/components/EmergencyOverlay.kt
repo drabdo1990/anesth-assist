@@ -184,13 +184,12 @@ private fun LastEmergencyContent(
 ) {
     val c = LocalClinicalColors.current
     val weight = state.patient.tbwKg
-    if (weight == null) {
-        NeedWeightBox()
-        return
-    }
-    val plan = calculateLipidPlan(weight)
-    val exceeded = state.lipidGivenMl > plan.maxCumulativeMl
-    val atLimit = state.lipidGivenMl == plan.maxCumulativeMl
+
+    WarningBanner(
+        level = WarningLevel.RED,
+        title = "Local anesthetic systemic toxicity",
+        body = "Stop injecting. Call for help. Give 20% lipid emulsion. Do not rely on local anesthetic-related interventions alone.",
+    )
 
     EmergencyTimerBar(
         label = "LAST Timer",
@@ -201,96 +200,104 @@ private fun LastEmergencyContent(
         onReset = { viewModel.timerReset("last") },
     )
 
-    ClinicalPanel(
-        title = "20% Lipid Emulsion (ASRA 2020)",
-        subtitle = if (plan.under70) "Stratum: < 70 kg (${formatNumber(weight, 1)} kg)" else "Stratum: >= 70 kg (${formatNumber(weight, 1)} kg)",
-        sourceTags = repository.sourceTags(listOf("asra-last-2020")),
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            BigValueCard(
-                label = "Initial Bolus (2-3 min)",
-                value = formatNumber(plan.bolusMl, 0),
-                unit = "mL",
-                accentColor = c.red,
-                modifier = Modifier.weight(1f),
-            )
-            if (plan.under70) {
+    if (weight == null) {
+        NeedWeightBox()
+    } else {
+        val plan = calculateLipidPlan(weight)
+        val exceeded = state.lipidGivenMl > plan.maxCumulativeMl
+        val atLimit = state.lipidGivenMl == plan.maxCumulativeMl
+
+        ClinicalPanel(
+            title = "20% Lipid Emulsion (ASRA 2020)",
+            subtitle = if (plan.under70) "Stratum: < 70 kg (${formatNumber(weight, 1)} kg)" else "Stratum: >= 70 kg (${formatNumber(weight, 1)} kg)",
+            sourceTags = repository.sourceTags(listOf("asra-last-2020")),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 BigValueCard(
-                    label = "Infusion (0.25 mL/kg/m)",
-                    value = formatNumber(plan.infusionMlPerHr ?: 0.0, 0),
-                    unit = "mL/hr",
-                    accentColor = c.amber,
-                    modifier = Modifier.weight(1f),
-                )
-            } else {
-                BigValueCard(
-                    label = "Infusion (15-20 min)",
-                    value = formatNumber(plan.infusionTotalMl ?: 250.0, 0),
+                    label = "Initial Bolus (2-3 min)",
+                    value = formatNumber(plan.bolusMl, 0),
                     unit = "mL",
-                    accentColor = c.amber,
+                    accentColor = c.red,
+                    modifier = Modifier.weight(1f),
+                )
+                if (plan.under70) {
+                    BigValueCard(
+                        label = "Infusion (0.25 mL/kg/m)",
+                        value = formatNumber(plan.infusionMlPerHr ?: 0.0, 0),
+                        unit = "mL/hr",
+                        accentColor = c.amber,
+                        modifier = Modifier.weight(1f),
+                    )
+                } else {
+                    BigValueCard(
+                        label = "Infusion (15-20 min)",
+                        value = formatNumber(plan.infusionTotalMl ?: 250.0, 0),
+                        unit = "mL",
+                        accentColor = c.amber,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+            }
+            if (plan.under70) {
+                Text(
+                    text = "Infusion: ${formatNumber(plan.infusionMlPerMin ?: 0.0, 1)} mL/min (double to ${formatNumber(plan.doubledInfusionMlPerMin ?: 0.0, 1)} mL/min if unstable).",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = c.textSecondary,
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                BigValueCard(
+                    label = "Given Total",
+                    value = formatNumber(state.lipidGivenMl, 0),
+                    unit = "mL",
+                    accentColor = if (exceeded) c.red else if (atLimit) c.amber else c.cyan,
+                    modifier = Modifier.weight(1f),
+                )
+                BigValueCard(
+                    label = "Max Ceiling (12 mL/kg)",
+                    value = formatNumber(plan.maxCumulativeMl, 0),
+                    unit = "mL",
+                    accentColor = c.textSecondary,
                     modifier = Modifier.weight(1f),
                 )
             }
-        }
-        if (plan.under70) {
-            Text(
-                text = "Infusion: ${formatNumber(plan.infusionMlPerMin ?: 0.0, 1)} mL/min (double to ${formatNumber(plan.doubledInfusionMlPerMin ?: 0.0, 1)} mL/min if unstable).",
-                style = MaterialTheme.typography.bodySmall,
-                color = c.textSecondary,
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            BigValueCard(
-                label = "Given Total",
-                value = formatNumber(state.lipidGivenMl, 0),
-                unit = "mL",
-                accentColor = if (exceeded) c.red else if (atLimit) c.amber else c.cyan,
-                modifier = Modifier.weight(1f),
-            )
-            BigValueCard(
-                label = "Max Ceiling (12 mL/kg)",
-                value = formatNumber(plan.maxCumulativeMl, 0),
-                unit = "mL",
-                accentColor = c.textSecondary,
-                modifier = Modifier.weight(1f),
-            )
-        }
-        if (exceeded) {
-            WarningBanner(
-                level = WarningLevel.RED,
-                title = "Cumulative ceiling exceeded",
-                body = "Logged volume (${formatNumber(state.lipidGivenMl, 0)} mL) exceeds 12 mL/kg (${formatNumber(plan.maxCumulativeMl, 0)} mL).",
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Button(
-                onClick = { viewModel.addLipid(plan.bolusMl) },
-                colors = ButtonDefaults.buttonColors(containerColor = c.red, contentColor = Color.White),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("log_lipid_bolus"),
-            ) {
-                Text("+ Bolus (${formatNumber(plan.bolusMl, 0)} mL)", fontWeight = FontWeight.Bold)
+            if (exceeded) {
+                WarningBanner(
+                    level = WarningLevel.RED,
+                    title = "Cumulative ceiling exceeded",
+                    body = "Logged volume (${formatNumber(state.lipidGivenMl, 0)} mL) exceeds 12 mL/kg (${formatNumber(plan.maxCumulativeMl, 0)} mL).",
+                )
             }
-            Button(
-                onClick = { viewModel.addLipid(if (plan.under70) (plan.infusionMlPerMin ?: 0.0) * 15.0 else 250.0) },
-                colors = ButtonDefaults.buttonColors(containerColor = c.amberBg, contentColor = c.amber),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("log_lipid_infusion"),
-            ) {
-                val infAmt = if (plan.under70) (plan.infusionMlPerMin ?: 0.0) * 15.0 else 250.0
-                Text("+ Inf (${formatNumber(infAmt, 0)} mL)", fontWeight = FontWeight.Bold)
-            }
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(c.cardInset)
-                    .border(1.dp, c.border, RoundedCornerShape(10.dp))
-                    .clickable { viewModel.resetLipid() }
-                    .testTag("reset_lipid"),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = "Reset lipid total", tint = c.textMuted)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = { viewModel.addLipid(plan.bolusMl) },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.red, contentColor = Color.White),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("log_lipid_bolus"),
+                ) {
+                    Text("+ Bolus (${formatNumber(plan.bolusMl, 0)} mL)", fontWeight = FontWeight.Bold)
+                }
+                Button(
+                    onClick = { viewModel.addLipid(if (plan.under70) (plan.infusionMlPerMin ?: 0.0) * 15.0 else 250.0) },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.amberBg, contentColor = c.amber),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("log_lipid_infusion"),
+                ) {
+                    val infAmt = if (plan.under70) (plan.infusionMlPerMin ?: 0.0) * 15.0 else 250.0
+                    Text("+ Inf (${formatNumber(infAmt, 0)} mL)", fontWeight = FontWeight.Bold)
+                }
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(c.cardInset)
+                        .border(1.dp, c.border, RoundedCornerShape(10.dp))
+                        .clickable { viewModel.resetLipid() }
+                        .testTag("reset_lipid"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Reset lipid total", tint = c.textMuted)
+                }
             }
         }
     }
@@ -311,14 +318,12 @@ private fun MhEmergencyContent(
 ) {
     val c = LocalClinicalColors.current
     val weight = state.patient.tbwKg
-    if (weight == null) {
-        NeedWeightBox()
-        return
-    }
-    val initialMg = weight * DANTROLENE_INITIAL_MG_PER_KG
-    val vialPlans = dantroleneVialPlans(initialMg)
-    val givenMgPerKg = state.dantroleneGivenMg / weight
-    val cautionExceeded = givenMgPerKg >= DANTROLENE_CUMULATIVE_CAUTION_MG_PER_KG
+
+    WarningBanner(
+        level = WarningLevel.RED,
+        title = "Malignant hyperthermia",
+        body = "Stop volatile anesthetics and succinylcholine. Call for help. Hyperventilate with 100% oxygen at high flow. Give dantrolene.",
+    )
 
     EmergencyTimerBar(
         label = "MH Timer",
@@ -335,80 +340,112 @@ private fun MhEmergencyContent(
             title = "Local MH Hotline / Contact",
             body = state.mhContact,
         )
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 48.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(c.card)
+                .border(1.dp, c.borderLight, RoundedCornerShape(12.dp))
+                .clickable {
+                    viewModel.closeEmergency()
+                    viewModel.setSettingsOpen(true)
+                }
+                .padding(horizontal = 12.dp, vertical = 10.dp)
+                .testTag("configure_mh_hotline"),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = "No MH hotline configured. Tap to set one in Settings.",
+                style = MaterialTheme.typography.bodySmall,
+                color = c.textSecondary,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
     }
 
-    ClinicalPanel(
-        title = "Dantrolene Dosing (2.5 mg/kg TBW)",
-        subtitle = "Actual weight: ${formatNumber(weight, 1)} kg",
-        sourceTags = repository.sourceTags(listOf("mhaus", "label-ryanodex", "label-revonto")),
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            BigValueCard(
-                label = "Initial Bolus",
-                value = formatNumber(initialMg, 0),
-                unit = "mg IV",
-                accentColor = c.red,
-                modifier = Modifier.weight(1f),
-            )
-            BigValueCard(
-                label = "Cumulative Given",
-                value = formatNumber(state.dantroleneGivenMg, 0),
-                unit = "mg (${formatNumber(givenMgPerKg, 1)} mg/kg)",
-                accentColor = if (cautionExceeded) c.red else c.cyan,
-                modifier = Modifier.weight(1f),
-            )
-        }
-        vialPlans.forEach { vp ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(c.cardInset)
-                    .border(1.dp, c.border, RoundedCornerShape(10.dp))
-                    .padding(10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column {
-                    Text(vp.label, style = MaterialTheme.typography.labelLarge, color = c.textPrimary)
-                    Text("Diluent: ${vp.diluentMl} mL sterile water", style = MaterialTheme.typography.bodySmall, color = c.textMuted)
-                }
-                Text(
-                    text = "${vp.vials} vials",
-                    fontFamily = JetBrainsMonoFontFamily,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = c.amber,
+    if (weight == null) {
+        NeedWeightBox()
+    } else {
+        val initialMg = weight * DANTROLENE_INITIAL_MG_PER_KG
+        val vialPlans = dantroleneVialPlans(initialMg)
+        val givenMgPerKg = state.dantroleneGivenMg / weight
+        val cautionExceeded = givenMgPerKg >= DANTROLENE_CUMULATIVE_CAUTION_MG_PER_KG
+
+        ClinicalPanel(
+            title = "Dantrolene Dosing (2.5 mg/kg TBW)",
+            subtitle = "Actual weight: ${formatNumber(weight, 1)} kg",
+            sourceTags = repository.sourceTags(listOf("mhaus", "label-ryanodex", "label-revonto")),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                BigValueCard(
+                    label = "Initial Bolus",
+                    value = formatNumber(initialMg, 0),
+                    unit = "mg IV",
+                    accentColor = c.red,
+                    modifier = Modifier.weight(1f),
+                )
+                BigValueCard(
+                    label = "Cumulative Given",
+                    value = formatNumber(state.dantroleneGivenMg, 0),
+                    unit = "mg (${formatNumber(givenMgPerKg, 1)} mg/kg)",
+                    accentColor = if (cautionExceeded) c.red else c.cyan,
+                    modifier = Modifier.weight(1f),
                 )
             }
-        }
-        if (cautionExceeded) {
-            WarningBanner(
-                level = WarningLevel.RED,
-                title = "10 mg/kg cumulative mark reached",
-                body = "Both product labels cite 10 mg/kg as the maximum cumulative dose. Re-evaluate diagnosis if unresponsive.",
-            )
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Button(
-                onClick = { viewModel.addDantrolene(initialMg) },
-                colors = ButtonDefaults.buttonColors(containerColor = c.red, contentColor = Color.White),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("log_dantrolene_bolus"),
-            ) {
-                Text("+ Give ${formatNumber(initialMg, 0)} mg (2.5 mg/kg)", fontWeight = FontWeight.Bold)
+            vialPlans.forEach { vp ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(c.cardInset)
+                        .border(1.dp, c.border, RoundedCornerShape(10.dp))
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column {
+                        Text(vp.label, style = MaterialTheme.typography.labelLarge, color = c.textPrimary)
+                        Text("Diluent: ${vp.diluentMl} mL sterile water", style = MaterialTheme.typography.bodySmall, color = c.textMuted)
+                    }
+                    Text(
+                        text = "${vp.vials} vials",
+                        fontFamily = JetBrainsMonoFontFamily,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = c.amber,
+                    )
+                }
             }
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(c.cardInset)
-                    .border(1.dp, c.border, RoundedCornerShape(10.dp))
-                    .clickable { viewModel.resetDantrolene() }
-                    .testTag("reset_dantrolene"),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = "Reset dantrolene total", tint = c.textMuted)
+            if (cautionExceeded) {
+                WarningBanner(
+                    level = WarningLevel.RED,
+                    title = "10 mg/kg cumulative mark reached",
+                    body = "Both product labels cite 10 mg/kg as the maximum cumulative dose. Re-evaluate diagnosis if unresponsive.",
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = { viewModel.addDantrolene(initialMg) },
+                    colors = ButtonDefaults.buttonColors(containerColor = c.red, contentColor = Color.White),
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp).testTag("log_dantrolene_bolus"),
+                ) {
+                    Text("+ Give ${formatNumber(initialMg, 0)} mg (2.5 mg/kg)", fontWeight = FontWeight.Bold)
+                }
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(c.cardInset)
+                        .border(1.dp, c.border, RoundedCornerShape(10.dp))
+                        .clickable { viewModel.resetDantrolene() }
+                        .testTag("reset_dantrolene"),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Reset dantrolene total", tint = c.textMuted)
+                }
             }
         }
     }
