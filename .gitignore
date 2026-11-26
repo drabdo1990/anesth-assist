@@ -44,3 +44,6 @@ skills-lock.json
 *.keystore
 keystore-base64.txt
 
+
+# Gradle build cache (must not be committed)
+.gradle/

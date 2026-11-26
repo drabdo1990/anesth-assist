@@ -1,6 +1,0 @@
-{
-  "name": "AnesthAssist",
-  "description": "Offline, zero-latency clinical decision support and cognitive aid for operating room anesthesia providers.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}

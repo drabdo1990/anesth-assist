@@ -1,0 +1,11 @@
+AnesthAssist is an offline, zero-latency clinical decision support and cognitive aid for operating room anesthesia providers.
+
+Features:
+- Preop, intraop (airway, dosing, ventilation) and postop cognitive aids and checklists
+- 185 condition summaries, drug formularies and clinical calculators, all bundled locally
+- Pediatric dosing reference with an audited test suite
+- Fully offline: the only network request is a manual, user-triggered update check in Settings
+
+Privacy: no analytics, no telemetry SDKs, no background traffic, no patient data leaves the device.
+
+Clinical safety notice: AnesthAssist is a decision-support aid. It is not a substitute for clinical judgement. Verify every dose against your local protocol.
